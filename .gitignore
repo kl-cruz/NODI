@@ -31,3 +31,13 @@
 # Debug files
 *.dSYM/
 *.su
+
+# QTcreator files
+*.includes
+*.files
+*.creator.user
+*.creator
+*.config
+
+# builds
+*_build*
