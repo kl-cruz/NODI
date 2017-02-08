@@ -145,33 +145,33 @@ void nsd_spim_unselect(nsd_spim_drv_t *p_spim_drv)
 
 void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
                       size_t n_tx,
-                      const void *txbuf,
+                      const void *p_txbuf,
                       size_t n_rx,
-                      void *rxbuf)
+                      void *p_rxbuf)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    nrf_spim_tx_buffer_set(p_spim_drv->spi, txbuf, n_tx);
-    nrf_spim_rx_buffer_set(p_spim_drv->spi, rxbuf, n_rx);
+    nrf_spim_tx_buffer_set(p_spim_drv->spi, p_txbuf, n_tx);
+    nrf_spim_rx_buffer_set(p_spim_drv->spi, p_rxbuf, n_rx);
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_BUSY;
     nrf_spim_task_trigger(p_spim_drv->spi, NRF_SPIM_TASK_START);
 }
 
-void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, size_t n, const void *txbuf)
+void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, size_t n, const void *p_txbuf)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    nrf_spim_tx_buffer_set(p_spim_drv->spi, txbuf, n);
+    nrf_spim_tx_buffer_set(p_spim_drv->spi, p_txbuf, n);
     nrf_spim_rx_buffer_set(p_spim_drv->spi, NULL, 0);
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_BUSY;
     nrf_spim_task_trigger(p_spim_drv->spi, NRF_SPIM_TASK_START);
 }
 
-void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, size_t n, void *rxbuf)
+void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, size_t n, void *p_rxbuf)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
     nrf_spim_tx_buffer_set(p_spim_drv->spi, NULL, 0);
-    nrf_spim_rx_buffer_set(p_spim_drv->spi, rxbuf, n);
+    nrf_spim_rx_buffer_set(p_spim_drv->spi, p_rxbuf, n);
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_BUSY;
     nrf_spim_task_trigger(p_spim_drv->spi, NRF_SPIM_TASK_START);

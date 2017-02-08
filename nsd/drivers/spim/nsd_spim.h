@@ -58,44 +58,38 @@ typedef void (*nsd_spim_irq_callback_t)(nsd_spim_drv_t *p_spim_drv);
 
 
 typedef struct {
-  /**
-   * @brief Operation complete callback or @p NULL.
-   */
-    nsd_spim_irq_callback_t             end_cb;
-    uint8_t sck_pin;
-    uint8_t cs_pin;
-    uint8_t miso_pin;
-    uint8_t mosi_pin;
-    nrf_spim_frequency_t frequency;
-    nrf_spim_mode_t mode;
-    nrf_spim_bit_order_t bit_order;
-    uint8_t orc;
+    nsd_spim_irq_callback_t  end_cb; ///< Operation complete callback or @p NULL.
+    uint8_t                  sck_pin;
+    uint8_t                  cs_pin;
+    uint8_t                  miso_pin;
+    uint8_t                  mosi_pin;
+    nrf_spim_frequency_t     frequency;
+    nrf_spim_mode_t          mode;
+    nrf_spim_bit_order_t     bit_order;
+    uint8_t                  orc;
 
     /* End of the mandatory fields.*/
 } nsd_spim_config_s;
 
+/**
+ * @brief   SPIM Driver state machine possible states.
+ */
 typedef enum {
-    NSD_SPIM_DRV_STATE_UNINIT,
-    NSD_SPIM_DRV_STATE_READY,
-    NSD_SPIM_DRV_STATE_BUSY,
-    NSD_SPIM_DRV_STATE_ENDTRX,
+    NSD_SPIM_DRV_STATE_UNINIT, ///< Driver is uninitialized.
+    NSD_SPIM_DRV_STATE_READY,  ///< Driver is ready to start an operation.
+    NSD_SPIM_DRV_STATE_BUSY,   ///< Driver is busy, executing operation.
+    NSD_SPIM_DRV_STATE_ENDTRX, ///< State signalizing that last transmission was finished.
 } nsd_spim_state_t;
 
 /**
- * @brief   Structure representing an SPI driver.
+ * @brief   Structure representing a SPIM driver.
  */
 struct nsd_spim_drv {
-    /**
-     * @brief Current configuration data.
-     */
-    const nsd_spim_config_s           *config;
-
-    volatile nsd_spim_state_t spim_state;
-    /* Pointer to the SPIx registers block. */
-    NRF_SPIM_Type               *spi;
-
-    IRQn_Type irq;          ///< SPI/SPIM peripheral instance IRQ number.
-    uint8_t irq_priority; ///< Interrupt priority.
+    const nsd_spim_config_s   *config;       ///< Current configuration data.
+    volatile nsd_spim_state_t  spim_state;   ///< SPIM driver current state.
+    NRF_SPIM_Type             *spi;          ///< Pointer to the SPIx registers block.
+    IRQn_Type                  irq;          ///< SPI/SPIM peripheral instance IRQ number.
+    uint8_t                    irq_priority; ///< Interrupt priority.
 };
 
 /*===========================================================================*/
@@ -121,21 +115,87 @@ extern nsd_spim_drv_t NSD_SPIM3;
 #ifdef __cplusplus
 extern "C" {
 #endif
+  /**
+   * @brief Initializes structures of active drivers
+   */
   void nsd_spim_prepare();
+
+  /**
+   * @brief Initializes selected peripheral.
+   *
+   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   */
   void nsd_spim_init(nsd_spim_drv_t *p_spim_drv);
+
+  /**
+   * @brief Selects chip select pin.
+   *
+   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   */
   void nsd_spim_select(nsd_spim_drv_t *p_spim_drv);
+
+  /**
+   * @brief Deselects chip select pin.
+   *
+   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   */
   void nsd_spim_unselect(nsd_spim_drv_t *p_spim_drv);
+
+  /**
+   * @brief   Exchanges data using SPIM peripheral.
+   *
+   * @details When using nRF52 Family remember about 255 bytes hardware limitation!
+   *
+   * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
+   * @param[out] n_tx             Output data length.
+   * @param[out] p_txbuf          Output data buffer.
+   * @param[in]  n_rx             Input data length.
+   * @param[in]  p_rxbuf          Input data buffer.
+   */
   void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
                          size_t n_tx,
-                         const void *txbuf,
+                         const void p_*txbuf,
                          size_t n_rx,
-                         void *rxbuf);
-  void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, size_t n, const void *txbuf);
-  void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, size_t n, void *rxbuf);
+                         void *p_rxbuf);
+
+  /**
+   * @brief Sends data using SPIM peripheral.
+   *
+   * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
+   * @param[out] n                Output data length.
+   * @param[out] p_txbuf          Output data buffer.
+   */
+  void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, size_t n, const void *p_txbuf);
+
+  /**
+   * @brief Receives data using SPIM peripheral.
+   *
+   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   * @param[in] n                 Input data length.
+   * @param[in] p_rxbuf           Input data buffer.
+   */
+  void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, size_t n, void *p_rxbuf);
+
+  /**
+   * @brief Deinitializes SPIM peripheral.
+   *
+   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   */
   void nsd_spim_deinit(nsd_spim_drv_t *p_spim_drv);
 
 #ifdef NSD_SPIM_DISABLE_IRQ_CONNECT
-  void nsd_spim_irq_routine(nsd_spimDriver_t *p_spim_drv);
+
+  /**
+   * @brief SPIM interrupt service routine.
+   *
+   * @details This interrupt routine should be connect to interrupt system used in specific
+   *          environment.To use direct connection between IRQ and this function, undefine
+   *          NSD_SPIM_DISABLE_IRQ_CONNECT define.
+   *
+   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   */
+  void nsd_spim_irq_routine(nsd_spim_drv_t *p_spim_drv);
+
 #endif
 
 #ifdef __cplusplus

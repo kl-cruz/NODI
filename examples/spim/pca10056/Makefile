@@ -2,10 +2,10 @@ PROJECT_NAME     := nsd_spim_example_pca10056
 TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
-SDK_ROOT := ../../../../nRF5_SDK
+SDK_ROOT := ../../../env/sdk
 PROJ_DIR := ..
 NSD_ROOT := ../../../nsd
-include $(NSD_ROOT)/nsd.makefile
+include $(NSD_ROOT)/nsd.mk
 INC_FOLDERS += $(NSD_INC_FOLDERS)
 SRC_FILES += $(NSD_SRC_FILES)
 
