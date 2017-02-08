@@ -43,4 +43,6 @@
 *_build*
 
 # External files, mostly downloaded
-*env*
+*env/sdk*
+*env/nrf*
+*env/toolchain*

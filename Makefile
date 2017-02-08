@@ -23,24 +23,22 @@ help:
 	@echo "make target=... clean_build                      Clean all compile files with target build directory"
 	@echo "make target=... all                              Simply compile test for target using available files"
 
-clean_build: clean
-	@echo "Cleaning build $(target)"
-	@rm -r -f build_$(target)
-	@rm -r -f app/.dep
-	@rm -r -f .dep
-
 configure:
 	@echo "Configure environement..."
 	@if test -d env; then echo "env directory exist!"; else mkdir env; fi
-	@echo "Setting env vonfig variables..."
+	@echo "Setting env config variables... - EXPERIMENTAL"
 	@./scripts/ENV_VARS.sh
 	@echo "Downloading nRF cmd tools..."
 	@./scripts/download_nrf_cmd_tools.sh
+	@echo "Downloading nRF sdk..."
+	@./scripts/download_sdk.sh
+	@echo "Installing newest gcc toolchain..."
+	@./scripts/install_new_gcc.sh
 	@echo "Done!"
 
 distclean:
 	@echo "Deconfigure environement..."
-	@rm -r -f env
+	@git clean -xdf
 	@echo "Done!"
 
 all:
@@ -48,7 +46,7 @@ all:
 	@cd examples/$(example)/$(target) && make clean && make all
 	@echo "Done!"
 
-flash:
-	@echo "Compiling example..."
-	@cd examples/$(example)/$(target) && make clean && make flash
+flash: all
+	@echo "Compiling and flashing example..."
+	@./scripts/compile_flash_example.sh $(example) $(target)
 	@echo "Done!"

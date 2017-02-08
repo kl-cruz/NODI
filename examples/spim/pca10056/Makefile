@@ -5,6 +5,11 @@ OUTPUT_DIRECTORY := _build
 SDK_ROOT := ../../../env/sdk
 PROJ_DIR := ..
 NSD_ROOT := ../../../nsd
+REPO_ROOT := ../../..
+
+# To override compiler path
+TEMPLATE_PATH := ../../../env/SDK_glue
+
 include $(NSD_ROOT)/nsd.mk
 INC_FOLDERS += $(NSD_INC_FOLDERS)
 SRC_FILES += $(NSD_SRC_FILES)
@@ -26,6 +31,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/toolchain \
   $(SDK_ROOT)/components/device \
   $(SDK_ROOT)/components/toolchain/gcc \
+  $(REPO_ROOT)/env/SDK_glue
 
 # Libraries common to all targets
 LIB_FILES += \
@@ -51,7 +57,7 @@ ASMFLAGS += -DNRF52840_XXAA
 ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
 
 # Linker flags
-LDFLAGS += -mthumb -mabi=aapcs -L $(TEMPLATE_PATH) -T$(LINKER_SCRIPT)
+LDFLAGS += -mthumb -mabi=aapcs -L $(TOOLCHAIN_COMMON) -T$(LINKER_SCRIPT)
 LDFLAGS += -mcpu=cortex-m4
 LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # let linker to dump unused sections
@@ -70,9 +76,9 @@ help:
 	@echo following targets are available:
 	@echo 	nrf52840_xxaa
 
-TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
+TOOLCHAIN_COMMON := $(SDK_ROOT)/components/toolchain/gcc
 
-include $(TEMPLATE_PATH)/Makefile.common
+include $(TOOLCHAIN_COMMON)/Makefile.common
 
 $(foreach target, $(TARGETS), $(call define_target, $(target)))
 

@@ -154,7 +154,7 @@ extern "C" {
    */
   void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
                          size_t n_tx,
-                         const void p_*txbuf,
+                         const void *p_txbuf,
                          size_t n_rx,
                          void *p_rxbuf);
 
