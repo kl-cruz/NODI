@@ -22,17 +22,19 @@
  * SOFTWARE.
  */
 
-#include "nsd.h"
+#ifndef NSD_MND_H
+#define NSD_MND_H
 
-void nsd_init(void)
-{
-    nsd_mnd_init();
+/* Micro Nvic Dispatcher - API */
 
-#if (NSD_SPIM_ENABLED == TRUE) || defined(__DOXYGEN__)
-    nsd_spim_prepare();
-#endif
+#include "nsd_device.h"
 
-#if (NSD_UARTE_ENABLED == TRUE) || defined(__DOXYGEN__)
-    nsd_uarte_prepare();
-#endif
-}
+typedef void (*nsd_nmd_irq_routine_t)(void *);
+
+void nsd_mnd_init(void);
+
+void nsd_mnd_register(nsd_nmd_irq_routine_t p_func, void * p_ctx, nsd_nmd_irq_t irq_num);
+
+void nsd_mnd_unregister(nsd_nmd_irq_t irq_num);
+
+#endif // NSD_MND_H

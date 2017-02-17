@@ -33,10 +33,12 @@
 #include "nsd_conf.h"
 #include "nsd_device.h"
 #include "nsd_common.h"
+#include "nsd_mnd.h"
 
 
 /* Drivers */
 #include "nsd_spim.h"
+#include "nsd_uarte.h"
 
 void nsd_init(void);
 

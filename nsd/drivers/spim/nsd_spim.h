@@ -192,9 +192,9 @@ extern "C" {
    *          environment.To use direct connection between IRQ and this function, undefine
    *          NSD_SPIM_DISABLE_IRQ_CONNECT define.
    *
-   * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
+   * @param[in] p_ctx             Pointer to context internally casted to structure representing SPIM driver.
    */
-  void nsd_spim_irq_routine(nsd_spim_drv_t *p_spim_drv);
+  void nsd_spim_irq_routine(void *p_ctx);
 
 #endif
 

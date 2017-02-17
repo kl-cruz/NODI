@@ -1,4 +1,4 @@
-PROJECT_NAME     := nsd_spim_example_pca10056
+PROJECT_NAME     := nsd_uarte_example_pca10056
 TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
@@ -16,7 +16,7 @@ INC_FOLDERS += $(NSD_INC_FOLDERS)
 SRC_FILES += $(NSD_SRC_FILES)
 
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
-  LINKER_SCRIPT  := nsd_spim_example.ld
+  LINKER_SCRIPT  := nsd_uarte_example.ld
 
 # Source files common to all targets
 SRC_FILES += \
