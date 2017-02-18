@@ -24,30 +24,6 @@
 
 #include "nsd_mnd.h"
 
-/* TODO:
- *
- * void my_default_handler(void)
- * {
- *     while(1);
- * }
- *
- * irq_pairs_t my_pairs[IRQ_numbers] = {my_default_handler};
- *
- * void default_handler(void)
- * {
- *     int32_t curr_irq = __IPSR(); // get_ipsr something like this
- *     my_pairs[curr_irq].func(my_pairs[curr_irq].p_ctx);
- * }
- *
- * vector_array[IRQ_numbers]={default_handler}
- *
- * init()
- * {
- *    NVIC_set_IRQ_offset(vector_array); // SCB->VTOR = (address & (uint32_t)0x1FFFFF80);
- * }
- *
- */
-
 /*===========================================================================*/
 /* Micro NVIC Dispatcher data structures and types.                          */
 /*===========================================================================*/
@@ -57,20 +33,24 @@ typedef struct {
     void * p_ctx;
 } nsd_mnd_irq_pair_t;
 
+typedef void (*nsd_nmd_nvic_irq_t)(void);
+
 /*===========================================================================*/
 /* Micro NVIC Dispatcher local definitions.                                  */
 /*===========================================================================*/
 
 #define NSD_MND_IRQ_OFFSET        (-NonMaskableInt_IRQn)
+
+#define NSD_MND_FIRST_IRQ_NUMBER  (-Reset_IRQn)
 #define NSD_MND_LAST_IRQ_NUMBER   (PWM3_IRQn)
+/* Count without reset handler */
 #define NSD_MND_IRQ_COUNT         (NSD_MND_IRQ_OFFSET + NSD_MND_LAST_IRQ_NUMBER + 1)
+/* Count without reset handler */
+#define NSD_MND_NVIC_IRQ_COUNT    (NSD_MND_FIRST_IRQ_NUMBER + NSD_MND_LAST_IRQ_NUMBER + 1)
 
 #define NSD_MND_PAIR_IDX(irq_idx) (irq_idx + NSD_MND_IRQ_OFFSET)
-
-#define NSD_MND_CALL_ROUTINE(routine) do {                               \
-    nsd_mnd_irq_pair_array[routine + NSD_MND_IRQ_OFFSET].irq_routine(    \
-            nsd_mnd_irq_pair_array[routine + NSD_MND_IRQ_OFFSET].p_ctx); \
-    } while(0)
+/* MND starts from NMI irq. ISPR has NMI at position 2. Translate it: */
+#define NSD_MND_IPSR_TO_IDX(ipsr_val) (ipsr_val - 2)
 
 /*===========================================================================*/
 /* Micro NVIC Dispatcher local variables and types.                          */
@@ -78,281 +58,28 @@ typedef struct {
 
 static nsd_mnd_irq_pair_t nsd_mnd_irq_pair_array[NSD_MND_IRQ_COUNT];
 
+/* Interrupt vector table has to be aligned to 6th bit according to:
+ * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0553a/CIHFDJCA.html
+ */
+static nsd_nmd_nvic_irq_t nvic_irq_array[NSD_MND_NVIC_IRQ_COUNT] __attribute__((aligned(0x40)));
+
 /*===========================================================================*/
 /* Micro NVIC Dispatcher local functions.                                    */
 /*===========================================================================*/
+static void nsd_mnd_nvic_routine(void)
+{
+    uint32_t curr_irq = __get_IPSR();
+    nsd_mnd_irq_pair_array[NSD_MND_IPSR_TO_IDX(curr_irq)].irq_routine(
+            nsd_mnd_irq_pair_array[NSD_MND_IPSR_TO_IDX(curr_irq)].p_ctx);
+}
 
-void nsd_mnd_default_routine(void * p_ctx)
+
+static void nsd_mnd_default_routine(void * p_ctx)
 {
     (void)(p_ctx);
     while(1);
 }
 
-/*===========================================================================*/
-/* Micro NVIC Dispatcher interrupts functions.                               */
-/*===========================================================================*/
-
-void NMI_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(NonMaskableInt_IRQn);
-}
-
-void HardFault_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(HardFault_IRQn);
-}
-
-void MemoryManagement_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(MemoryManagement_IRQn);
-}
-
-void BusFault_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(BusFault_IRQn);
-}
-
-void UsageFault_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(UsageFault_IRQn);
-}
-
-void SVC_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(SVCall_IRQn);
-}
-
-void DebugMon_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(DebugMonitor_IRQn);
-}
-
-void PendSV_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(PendSV_IRQn);
-}
-
-void SysTick_Handler(void)
-{
-    NSD_MND_CALL_ROUTINE(SysTick_IRQn);
-}
-
-
-  /* External Interrupts */
-void POWER_CLOCK_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(POWER_CLOCK_IRQn);
-}
-
-void RADIO_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(RADIO_IRQn);
-}
-
-void UARTE0_UART0_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(UARTE0_UART0_IRQn);
-}
-
-void SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn);
-}
-
-void SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn);
-}
-
-void NFCT_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(NFCT_IRQn);
-}
-
-void GPIOTE_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(GPIOTE_IRQn);
-}
-
-void SAADC_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SAADC_IRQn);
-}
-
-void TIMER0_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(TIMER0_IRQn);
-}
-
-void TIMER1_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(TIMER1_IRQn);
-}
-
-void TIMER2_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(TIMER2_IRQn);
-}
-
-void RTC0_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(RTC0_IRQn);
-}
-
-void TEMP_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(TEMP_IRQn);
-}
-
-void RNG_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(RNG_IRQn);
-}
-
-void ECB_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(ECB_IRQn);
-}
-
-void CCM_AAR_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(CCM_AAR_IRQn);
-}
-
-void WDT_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(WDT_IRQn);
-}
-
-void RTC1_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(RTC1_IRQn);
-}
-
-void QDEC_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(QDEC_IRQn);
-}
-
-void COMP_LPCOMP_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(COMP_LPCOMP_IRQn);
-}
-
-void SWI0_EGU0_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SWI0_EGU0_IRQn);
-}
-
-void SWI1_EGU1_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SWI1_EGU1_IRQn);
-}
-
-void SWI2_EGU2_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SWI2_EGU2_IRQn);
-}
-
-void SWI3_EGU3_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SWI3_EGU3_IRQn);
-}
-
-void SWI4_EGU4_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SWI4_EGU4_IRQn);
-}
-
-void SWI5_EGU5_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SWI5_EGU5_IRQn);
-}
-
-void TIMER3_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(TIMER3_IRQn);
-}
-
-void TIMER4_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(TIMER4_IRQn);
-}
-
-void PWM0_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(PWM0_IRQn);
-}
-
-void PDM_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(PDM_IRQn);
-}
-
-void MWU_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(MWU_IRQn);
-}
-
-void PWM1_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(PWM1_IRQn);
-}
-
-void PWM2_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(PWM2_IRQn);
-}
-
-void SPIM2_SPIS2_SPI2_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SPIM2_SPIS2_SPI2_IRQn);
-}
-
-void RTC2_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(RTC2_IRQn);
-}
-
-void I2S_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(I2S_IRQn);
-}
-
-void FPU_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(FPU_IRQn);
-}
-
-void USBD_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(USBD_IRQn);
-}
-
-void UARTE1_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(UARTE1_IRQn);
-}
-
-void QSPI_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(QSPI_IRQn);
-}
-
-void CRYPTOCELL_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(CRYPTOCELL_IRQn);
-}
-
-void SPIM3_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(SPIM3_IRQn);
-}
-
-void PWM3_IRQHandler(void)
-{
-    NSD_MND_CALL_ROUTINE(PWM3_IRQn);
-}
 
 /*===========================================================================*/
 /* Micro Nvic Dispatcher exported functions.                                 */
@@ -361,15 +88,26 @@ void PWM3_IRQHandler(void)
 void nsd_mnd_init(void)
 {
     uint32_t i;
+    SCB->VTOR = ((uint32_t)(nvic_irq_array) & (uint32_t)0xFFFFFFC0);
+
+    /* Connect default handler for every interrupt in dispatcher. */
     for (i = 0; i < NSD_MND_IRQ_COUNT; ++i)
     {
         nsd_mnd_irq_pair_array[i].irq_routine = nsd_mnd_default_routine;
     }
+
+    /* Connect default handler for every interrupt in NVIC. */
+    for (i = 0; i < NSD_MND_NVIC_IRQ_COUNT; ++i)
+    {
+        nvic_irq_array[i] = nsd_mnd_nvic_routine;
+    }
+
 }
 
 void nsd_mnd_register(nsd_nmd_irq_routine_t p_func, void * p_ctx, nsd_nmd_irq_t irq_num)
 {
     /* TODO: Add assert to check if irq_routine equals nsd_mnd_default_routine. */
+
     nsd_mnd_irq_pair_array[NSD_MND_PAIR_IDX(irq_num)].irq_routine = p_func;
     nsd_mnd_irq_pair_array[NSD_MND_PAIR_IDX(irq_num)].p_ctx = p_ctx;
 }
