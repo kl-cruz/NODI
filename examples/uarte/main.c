@@ -35,19 +35,18 @@ nsd_uarte_config_s cfg = {
     .end_cb = irq_routine,
     .rx_pin = 3,
     .tx_pin = 28,
-    .hwfc = NRF_UARTE_HWFC_DISABLED,
-    .parity = NRF_UARTE_PARITY_EXCLUDED,
-    .baudrate = NRF_UARTE_BAUDRATE_115200,
+    .hwfc = 0,
+    .parity = 0,
+    .baudrate = NSD_UARTE_BAUD_115200,
 };
 
 
 void pin_config(void)
 {
-    nrf_gpio_pin_set(cfg.tx_pin);
-    nrf_gpio_cfg_output(cfg.tx_pin);
-    nrf_gpio_cfg_input(cfg.rx_pin, NRF_GPIO_PIN_NOPULL);
+    nsd_gpio_set(NSD_GPIO_P0, cfg.tx_pin);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.tx_pin, NSD_GPIO_CFG_UART_TX);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.rx_pin, NSD_GPIO_CFG_UART_RX);
 }
-
 
 int main(void)
 {

@@ -30,8 +30,6 @@ configure:
 	@./scripts/ENV_VARS.sh
 	@echo "Downloading nRF cmd tools..."
 	@./scripts/download_nrf_cmd_tools.sh
-	@echo "Downloading nRF sdk..."
-	@./scripts/download_sdk.sh
 	@echo "Installing newest gcc toolchain..."
 	@./scripts/install_new_gcc.sh
 	@echo "Done!"

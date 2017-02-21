@@ -26,22 +26,27 @@
 #define NSD_CONF_H
 
 /* Enable/Disable MCU peripherals */
-#define NSD_SPIM_ENABLED                       TRUE
+#define NSD_SPIM_ENABLED                       1
+#define NSD_UARTE_ENABLED                      0
 
 /* SPIM driver configuration */
-#define NSD_SPIM_USE_SPIM0                     TRUE
+#define NSD_SPIM_USE_SPIM0                     1
 #define NSD_SPIM_SPIM0_IRQ_PRIORITY            7
 
-#define NSD_SPIM_USE_SPIM1                     FALSE
+#define NSD_SPIM_USE_SPIM1                     0
 #define NSD_SPIM_SPIM1_IRQ_PRIORITY            7
 
-#define NSD_SPIM_USE_SPIM2                     FALSE
+#define NSD_SPIM_USE_SPIM2                     0
 #define NSD_SPIM_SPIM2_IRQ_PRIORITY            7
 
-#define NSD_SPIM_USE_SPIM3                     FALSE
+#define NSD_SPIM_USE_SPIM3                     0
 #define NSD_SPIM_SPIM3_IRQ_PRIORITY            7
 
-//#define NSD_CHIP_NRF52840
+/* UARTE driver configuration */
+#define NSD_UARTE_USE_UARTE0                   0
+#define NSD_UARTE_UARTE0_IRQ_PRIORITY          7
 
+#define NSD_UARTE_USE_UARTE1                   0
+#define NSD_UARTE_UARTE1_IRQ_PRIORITY          7
 
 #endif // NSD_CONF_H

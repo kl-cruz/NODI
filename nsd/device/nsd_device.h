@@ -33,4 +33,7 @@
 #error "Please define chip in C flags as NSD_CHIP=xxxxx"
 #endif
 
-#endif // NSD_NRF52832_H
+#include "nsd_conf.h"
+#include "nsd_mnd.h"
+
+#endif // NSD_DEVICE_H

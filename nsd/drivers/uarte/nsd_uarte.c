@@ -22,16 +22,17 @@
  * SOFTWARE.
  */
 
-#include "nsd.h"
+#include "nsd_common.h"
+#include "nsd_uarte.h"
 
-#if (NSD_UARTE_ENABLED == TRUE) || defined(__DOXYGEN__)
+#if (NSD_UARTE_ENABLED == 1) || defined(__DOXYGEN__)
 
-#if defined(NSD_CHIP_HAS_UARTE0) && (NSD_UARTE_USE_UARTE0 == TRUE) || defined(__DOXYGEN__)
+#if defined(NSD_CHIP_HAS_UARTE0) && (NSD_UARTE_USE_UARTE0 == 1) || defined(__DOXYGEN__)
 /** @brief UARTE0 driver object.*/
 nsd_uarte_drv_t NSD_UARTE0;
 #endif
 
-#if defined(NSD_CHIP_HAS_UARTE1) && (NSD_UARTE_USE_UARTE1 == TRUE) || defined(__DOXYGEN__)
+#if defined(NSD_CHIP_HAS_UARTE1) && (NSD_UARTE_USE_UARTE1 == 1) || defined(__DOXYGEN__)
 /** @brief UARTE1 driver object.*/
 nsd_uarte_drv_t NSD_UARTE1;
 #endif
@@ -40,7 +41,7 @@ void nsd_uarte_irq_routine(void *p_ctx);
 
 void nsd_uarte_prepare(void)
 {
-#if (NSD_UARTE_USE_UARTE0 == TRUE)
+#if (NSD_UARTE_USE_UARTE0 == 1)
     NSD_UARTE0.uarte_state = NSD_UARTE_DRV_STATE_UNINIT;
     NSD_UARTE0.p_uarte_reg = NRF_UARTE0;
     NSD_UARTE0.irq = UARTE0_IRQn;
@@ -50,7 +51,7 @@ void nsd_uarte_prepare(void)
 #endif
 #endif
 
-#if (NSD_UARTE_USE_UARTE1 == TRUE)
+#if (NSD_UARTE_USE_UARTE1 == 1)
     NSD_UARTE1.uarte_state = NSD_UARTE_DRV_STATE_UNINIT;
     NSD_UARTE1.p_uarte_reg = NRF_UARTE1;
     NSD_UARTE1.irq = UARTE1_IRQn;
@@ -63,30 +64,34 @@ void nsd_uarte_prepare(void)
 
 void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
 {
-    NRF_UARTE_Type * p_uarte = p_uarte_drv->p_uarte_reg;
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     NSD_DRV_CHECK(p_uarte_drv != NULL);
     NSD_DRV_CHECK(p_uarte_drv->uarte_state != NSD_UARTE_DRV_STATE_UNINIT);
 
     /* Set peripheral's pins. */
-    //TODO Consider to move pin configuration to pinmux manager
-    nrf_uarte_txrx_pins_set(p_uarte, p_uarte_drv->config->tx_pin, p_uarte_drv->config->rx_pin);
-    nrf_uarte_hwfc_pins_disconnect(p_uarte);
+    p_reg->PSEL.TXD = p_uarte_drv->config->tx_pin;
+    p_reg->PSEL.RXD = p_uarte_drv->config->rx_pin;
 
-    nrf_uarte_baudrate_set(p_uarte, p_uarte_drv->config->baudrate);
+    /* Currently driver is not support flow control. Disable pins. */
+    p_reg->PSEL.RTS = 0xFFFFFFFF;
+    p_reg->PSEL.CTS = 0xFFFFFFFF;
+
+    p_reg->BAUDRATE = p_uarte_drv->config->baudrate;
 
     /* Set SPI mode and bitorder*/
-    nrf_uarte_configure(p_uarte, p_uarte_drv->config->parity, p_uarte_drv->config->hwfc);
+    p_reg->CONFIG =p_uarte_drv->config->parity | p_uarte_drv->config->hwfc;
 
     /* Set interrupt, because driver is based on interrupts. */
-    nrf_uarte_event_clear(p_uarte, NRF_UARTE_EVENT_ENDTX);
-    nrf_uarte_event_clear(p_uarte, NRF_UARTE_EVENT_ENDRX);
-    nrf_uarte_int_disable(p_uarte, 0xFFFFFFFF);
-    nrf_uarte_int_enable(p_uarte, NRF_UARTE_INT_ENDRX_MASK);
-    nrf_uarte_int_enable(p_uarte, NRF_UARTE_INT_ENDTX_MASK);
+    p_reg->EVENTS_ENDRX = 0;
+    p_reg->EVENTS_ENDTX = 0;
+
+    p_reg->INTENCLR = 0xFFFFFFFF;
+    p_reg->INTENSET = (UARTE_INTENCLR_ENDRX_Enabled << UARTE_INTENCLR_ENDRX_Pos) |
+                      (UARTE_INTENCLR_ENDTX_Enabled << UARTE_INTENCLR_ENDTX_Pos);
 
     /* Enable peripheral */
-    nrf_uarte_enable(p_uarte);
+    p_reg->ENABLE = UARTE_ENABLE_ENABLE_Enabled;
 
     nsd_common_irq_enable(p_uarte_drv->irq, p_uarte_drv->irq_priority);
 
@@ -97,56 +102,64 @@ void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv)
 {
     NSD_DRV_CHECK(p_uarte_drv != NULL);
     NSD_DRV_CHECK(p_uarte_drv->uarte_state != NSD_SPIM_DRV_STATE_UNINIT);
-    NRF_UARTE_Type * p_uarte_reg = p_uarte_drv->p_uarte_reg;
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     nsd_common_irq_disable(p_uarte_drv->irq);
-    nrf_uarte_int_disable(p_uarte_reg, 0xFFFFFFFF);
-    nrf_uarte_disable(p_uarte_reg);
+    p_reg->INTENCLR = 0xFFFFFFFF;
+    p_reg->ENABLE = UARTE_ENABLE_ENABLE_Disabled;
 
     p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_UNINIT;
 }
 
-void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, size_t n, const void *p_txbuf)
+void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *p_txbuf)
 {
     NSD_DRV_CHECK(p_uarte_drv != NULL);
     NSD_DRV_CHECK(p_txbuf != NULL);
-    nrf_uarte_tx_buffer_set(p_uarte_drv->p_uarte_reg, p_txbuf, n);
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
+    p_reg->TXD.PTR    = (uint32_t)p_txbuf;
+    p_reg->TXD.MAXCNT = n;
+
+    p_reg->EVENTS_ENDTX = 0;
+    p_reg->EVENTS_TXSTOPPED = 0;
     p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_BUSY;
-    nrf_uarte_event_clear(p_uarte_drv->p_uarte_reg, NRF_UARTE_EVENT_ENDTX);
-    nrf_uarte_event_clear(p_uarte_drv->p_uarte_reg, NRF_UARTE_EVENT_TXSTOPPED);
-    nrf_uarte_task_trigger(p_uarte_drv->p_uarte_reg, NRF_UARTE_TASK_STARTTX);
+    p_reg->TASKS_STARTTX = 1;
 }
 
 void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv)
 {
-    nrf_uarte_task_trigger(p_uarte_drv->p_uarte_reg, NRF_UARTE_TASK_STOPTX);
+    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
+
+    p_reg->TASKS_STOPTX = 1;
 }
 
-bool nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv)
+uint32_t nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv)
 {
-    return false;
+    return 0;
 }
 
-void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, size_t n, void *p_rxbuf)
+void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_rxbuf)
 {
 
 }
 
 void nsd_uarte_receive_stop(nsd_uarte_drv_t *p_uarte_drv)
 {
-    nrf_uarte_task_trigger(p_uarte_drv->p_uarte_reg, NRF_UARTE_TASK_STOPRX);
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
+    p_reg->TASKS_STOPRX = 1;
 }
 
-bool nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv)
+uint32_t nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv)
 {
-    return false;
+    return 0;
 }
 
 void nsd_uarte_irq_routine(void *p_ctx)
 {
     nsd_uarte_drv_t *p_uarte_drv = (nsd_uarte_drv_t *) p_ctx;
-    nrf_uarte_event_clear(p_uarte_drv->p_uarte_reg, NRF_UARTE_EVENT_ENDTX);
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
+    p_reg->EVENTS_ENDTX = 0;
     p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_BUSY;
     if (p_uarte_drv->config->end_cb)
     {

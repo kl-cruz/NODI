@@ -27,10 +27,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
- 
+
 #include <stdint.h>
 #include <stdbool.h>
-#include "nrf.h"
+#include "nrf52840.h"
+#include "nrf52840_bitfields.h"
 #include "system_nrf52840.h"
 
 /*lint ++flb "Enter library region" */
@@ -66,31 +67,31 @@ void SystemInit(void)
         NRF_CLOCK->EVENTS_CTTO = 0;
         NRF_CLOCK->CTIV = 0;
     }
-    
+
     /* Workaround for Errata 98 "NFCT: Not able to communicate with the peer" found at the Errata document
        for your device located at https://infocenter.nordicsemi.com/  */
     if (errata_98()){
         *(volatile uint32_t *)0x4000568Cul = 0x00038148ul;
     }
-    
+
     /* Workaround for Errata 103 "CCM: Wrong reset value of CCM MAXPACKETSIZE" found at the Errata document
        for your device located at https://infocenter.nordicsemi.com/  */
     if (errata_103()){
         NRF_CCM->MAXPACKETSIZE = 0xFBul;
     }
-    
+
     /* Workaround for Errata 115 "RAM: RAM content cannot be trusted upon waking up from System ON Idle or System OFF mode" found at the Errata document
        for your device located at https://infocenter.nordicsemi.com/  */
     if (errata_115()){
         *(volatile uint32_t *)0x40000EE4 = (*(volatile uint32_t *)0x40000EE4 & 0xFFFFFFF0) | (*(uint32_t *)0x10000258 & 0x0000000F);
     }
-    
+
     /* Workaround for Errata 120 "QSPI: Data read or written is corrupted" found at the Errata document
        for your device located at https://infocenter.nordicsemi.com/  */
     if (errata_120()){
         *(volatile uint32_t *)0x40029640ul = 0x200ul;
     }
-    
+
     /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the
      * compiler. Since the FPU consumes energy, remember to disable FPU use in the compiler if floating point unit
      * operations are not used in your code. */
@@ -162,7 +163,7 @@ static bool errata_36(void)
     if ((*(uint32_t *)0x10000130ul == 0x8ul) && (*(uint32_t *)0x10000134ul == 0x0ul)){
         return true;
     }
-    
+
     return false;
 }
 
@@ -172,7 +173,7 @@ static bool errata_98(void)
     if ((*(uint32_t *)0x10000130ul == 0x8ul) && (*(uint32_t *)0x10000134ul == 0x0ul)){
         return true;
     }
-    
+
     return false;
 }
 
@@ -182,7 +183,7 @@ static bool errata_103(void)
     if ((*(uint32_t *)0x10000130ul == 0x8ul) && (*(uint32_t *)0x10000134ul == 0x0ul)){
         return true;
     }
-    
+
     return false;
 }
 
@@ -192,7 +193,7 @@ static bool errata_115(void)
     if ((*(uint32_t *)0x10000130ul == 0x8ul) && (*(uint32_t *)0x10000134ul == 0x0ul)){
         return true;
     }
-    
+
     return false;
 }
 
@@ -202,7 +203,7 @@ static bool errata_120(void)
     if ((*(uint32_t *)0x10000130ul == 0x8ul) && (*(uint32_t *)0x10000134ul == 0x0ul)){
         return true;
     }
-    
+
     return false;
 }
 

@@ -22,10 +22,17 @@
  * SOFTWARE.
  */
 
-#ifndef NRF_ASSERT_H_
-#define NRF_ASSERT_H_
+#include <stdbool.h>
+#include <stdint.h>
+#include "nsd.h"
 
-#define ASSERT(arg1)
+int main(void)
+{
+    /* Configure nsd subsystem */
+    nsd_init();
 
+    while (true)
+    {
+    }
+}
 
-#endif /* NRF_ASSERT_H_ */

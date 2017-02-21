@@ -7,4 +7,4 @@ MEMORY
   RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x40000
 }
 
-INCLUDE "nrf5x_common.ld"
+INCLUDE "nrf52840_common.ld"

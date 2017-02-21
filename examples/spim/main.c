@@ -26,19 +26,22 @@
 #include <stdint.h>
 #include "nsd.h"
 
+static bool data_sent = false;
+
 void irq_routine(nsd_spim_drv_t *p_spim_drv)
 {
     (void)(p_spim_drv);
     nsd_spim_unselect(&NSD_SPIM0);
+    data_sent = true;
 }
 
 nsd_spim_config_s cfg = {
-    .bit_order = NRF_SPIM_BIT_ORDER_MSB_FIRST,
+    .bit_order = NSD_SPIM_BIT_ORDER_MSB_FIRST,
     .cs_pin = 3,
     .end_cb = irq_routine,
-    .frequency = NRF_SPIM_FREQ_125K,
+    .frequency = NSD_SPIM_FREQ_125K,
     .miso_pin = 4,
-    .mode = NRF_SPIM_MODE_0,
+    .mode = NSD_SPIM_MODE_0,
     .mosi_pin = 28,
     .orc = 0x00,
     .sck_pin = 29,
@@ -47,25 +50,21 @@ nsd_spim_config_s cfg = {
 
 void pin_config(void)
 {
-    if (cfg.mode <= NRF_SPIM_MODE_1)
+    if (cfg.mode <= NSD_SPIM_MODE_1)
     {
-        nrf_gpio_pin_clear(cfg.sck_pin);
+        nsd_gpio_clr(NSD_GPIO_P0, cfg.sck_pin);
     }
     else
     {
-        nrf_gpio_pin_set(cfg.sck_pin);
+        nsd_gpio_set(NSD_GPIO_P0, cfg.sck_pin);
     }
 
-    nrf_gpio_cfg_output(cfg.sck_pin);
-    // - MOSI (optional) - output with initial value 0,
-     nrf_gpio_pin_clear(cfg.mosi_pin);
-     nrf_gpio_cfg_output(cfg.mosi_pin);
-    // - MISO (optional) - input,
+    nsd_gpio_config(NSD_GPIO_P0, cfg.sck_pin, NSD_GPIO_CFG_SPI_SCK);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.mosi_pin, NSD_GPIO_CFG_SPI_MOSI);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.miso_pin, NSD_GPIO_CFG_SPI_MISO);
 
-    nrf_gpio_cfg_input(cfg.miso_pin, NRF_GPIO_PIN_NOPULL);
-    // - Slave Select (optional) - output with initial value 1 (inactive).
-    nrf_gpio_pin_set(cfg.cs_pin);
-    nrf_gpio_cfg_output(cfg.cs_pin);
+    nsd_gpio_set(NSD_GPIO_P0, cfg.cs_pin);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.cs_pin, NSD_GPIO_CFG_SPI_CS);
 }
 
 
@@ -83,6 +82,8 @@ int main(void)
     nsd_spim_init(&NSD_SPIM0);
     nsd_spim_select(&NSD_SPIM0);
     nsd_spim_send(&NSD_SPIM0, 2, data);
+
+    while (!data_sent);
     nsd_spim_deinit(&NSD_SPIM0);
 
     while (true)

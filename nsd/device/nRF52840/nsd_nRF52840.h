@@ -32,8 +32,13 @@
 /* Interrupt related code. */
 #define nsd_nmd_irq_t IRQn_Type
 
+/* GPIO subsystem */
+#define nsd_gpio_t          NRF_GPIO_Type
+#define NSD_GPIO_P0         NRF_P0
+#define NSD_GPIO_P1         NRF_P1
+
 /* SPIM subsystem */
-#include "nrf_spim.h"
+//#include "nrf_spim.h"
 #define NSD_CHIP_HAS_SPIM0
 #define SPIM0_IRQn          SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn
 #define SPIM0_IRQHandler    SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler
@@ -48,7 +53,7 @@
 #define SPIM3_IRQHandler    SPIM3_IRQHandler
 
 /* UARTE subsystem */
-#include "nrf_uarte.h"
+//#include "nrf_uarte.h"
 #define NSD_CHIP_HAS_UARTE0
 #define UARTE0_IRQn          UARTE0_UART0_IRQn
 #define UARTE0_IRQHandler    UARTE0_UART0_IRQHandler
@@ -58,9 +63,6 @@
 
 
 /* GPIO subsystem */
-#include "nrf_gpio.h"
-#define NSD_GPIO_PORT0      NRF_P0
-#define NSD_GPIO_PORT1      NRF_P1
-
+#include "nsd_gpio_nrf52840.h"
 
 #endif // NSD_NRF52840_H

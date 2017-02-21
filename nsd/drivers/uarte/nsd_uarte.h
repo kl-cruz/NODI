@@ -27,14 +27,15 @@
 
 #include "nsd_device.h"
 
-#if (NSD_UARTE_ENABLED == TRUE) || defined(__DOXYGEN__)
+#if (NSD_UARTE_ENABLED == 1) || defined(__DOXYGEN__)
+#include "nsd_uarte_const.h"
 
 #if !defined(NSD_UARTE_USE_UARTE0) || defined(__DOXYGEN__)
-#define NSD_UARTE_USE_UARTE0 FALSE
+#define NSD_UARTE_USE_UARTE0 0
 #endif
 
 #if !defined(NSD_UARTE_USE_UARTE1) || defined(__DOXYGEN__)
-#define NSD_UARTE_USE_UARTE1 FALSE
+#define NSD_UARTE_USE_UARTE1 0
 #endif
 
 typedef struct nsd_uarte_drv nsd_uarte_drv_t;
@@ -44,7 +45,7 @@ typedef struct nsd_uarte_drv nsd_uarte_drv_t;
  * @brief   SPI notification callback type.
  *
  * @param[in] p_uarte_drv      pointer to the @p nsd_uarte_drv_t object triggering the
- *                            callback
+ *                             callback
  */
 typedef void (*nsd_uarte_irq_callback_t)(nsd_uarte_drv_t *p_uarte_drv);
 
@@ -55,9 +56,9 @@ typedef struct {
     uint8_t                  tx_pin;
     uint8_t                  rts_pin;
     uint8_t                  cts_pin;
-    nrf_uarte_hwfc_t         hwfc;               ///< Flow control configuration.
-    nrf_uarte_parity_t       parity;             ///< Parity configuration.
-    nrf_uarte_baudrate_t     baudrate;           ///< Baudrate.
+    uint32_t     hwfc;               ///< Flow control configuration.
+    uint32_t     parity;             ///< Parity configuration.
+    uint32_t     baudrate;           ///< Baudrate.
 } nsd_uarte_config_s;
 
 /**
@@ -84,11 +85,11 @@ struct nsd_uarte_drv {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-#if (NSD_UARTE_USE_UARTE0 == TRUE) && !defined(__DOXYGEN__)
+#if (NSD_UARTE_USE_UARTE0 == 1) && !defined(__DOXYGEN__)
 extern nsd_uarte_drv_t NSD_UARTE0;
 #endif
 
-#if (NSD_UARTE_USE_UARTE1 == TRUE) && !defined(__DOXYGEN__)
+#if (NSD_UARTE_USE_UARTE1 == 1) && !defined(__DOXYGEN__)
 extern nsd_uarte_drv_t NSD_UARTE1;
 #endif
 
@@ -116,7 +117,7 @@ extern "C" {
    * @param[out] n                Output data length.
    * @param[out] p_txbuf          Output data buffer.
    */
-  void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, size_t n, const void *p_txbuf);
+  void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *p_txbuf);
 
   /**
    * @brief nsd_uarte_send_stop
@@ -129,7 +130,7 @@ extern "C" {
    * @param p_uarte_drv
    * @return
    */
-  bool nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv);
+  uint32_t nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv);
 
   /**
    * @brief Receives data using UARTE peripheral.
@@ -138,7 +139,7 @@ extern "C" {
    * @param[in] n                 Input data length.
    * @param[in] p_rxbuf           Input data buffer.
    */
-  void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, size_t n, void *p_rxbuf);
+  void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_rxbuf);
 
   /**
    * @brief nsd_uarte_receive_stop
@@ -151,7 +152,7 @@ extern "C" {
    * @param p_uarte_drv
    * @return
    */
-  bool nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv);
+  uint32_t nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv);
 
   /**
    * @brief Deinitializes UARTE peripheral.

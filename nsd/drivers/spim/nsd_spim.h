@@ -27,26 +27,26 @@
 
 #include "nsd_device.h"
 
-#if (NSD_SPIM_ENABLED == TRUE) || defined(__DOXYGEN__)
+#if (NSD_SPIM_ENABLED == 1) || defined(__DOXYGEN__)
+#include "nsd_spim_const.h"
 
 #if !defined(NSD_SPIM_USE_SPIM0) || defined(__DOXYGEN__)
-#define NSD_SPIM_USE_SPIM0 FALSE
+#define NSD_SPIM_USE_SPIM0 0
 #endif
 
 #if !defined(NSD_SPIM_USE_SPIM1) || defined(__DOXYGEN__)
-#define NSD_SPIM_USE_SPIM1 FALSE
+#define NSD_SPIM_USE_SPIM1 0
 #endif
 
 #if !defined(NSD_SPIM_USE_SPIM2) || defined(__DOXYGEN__)
-#define NSD_SPIM_USE_SPIM2 FALSE
+#define NSD_SPIM_USE_SPIM2 0
 #endif
 
 #if !defined(NSD_SPIM_USE_SPIM3) || defined(__DOXYGEN__)
-#define NSD_SPIM_USE_SPIM3 FALSE
+#define NSD_SPIM_USE_SPIM3 0
 #endif
 
 typedef struct nsd_spim_drv nsd_spim_drv_t;
-
 
 /**
  * @brief   SPI notification callback type.
@@ -56,19 +56,16 @@ typedef struct nsd_spim_drv nsd_spim_drv_t;
  */
 typedef void (*nsd_spim_irq_callback_t)(nsd_spim_drv_t *p_spim_drv);
 
-
 typedef struct {
     nsd_spim_irq_callback_t  end_cb; ///< Operation complete callback or @p NULL.
     uint8_t                  sck_pin;
     uint8_t                  cs_pin;
     uint8_t                  miso_pin;
     uint8_t                  mosi_pin;
-    nrf_spim_frequency_t     frequency;
-    nrf_spim_mode_t          mode;
-    nrf_spim_bit_order_t     bit_order;
+    uint32_t                 frequency;
+    uint32_t                 mode;
+    uint32_t                 bit_order;
     uint8_t                  orc;
-
-    /* End of the mandatory fields.*/
 } nsd_spim_config_s;
 
 /**
@@ -96,19 +93,19 @@ struct nsd_spim_drv {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-#if (NSD_SPIM_USE_SPIM0 == TRUE) && !defined(__DOXYGEN__)
+#if (NSD_SPIM_USE_SPIM0 == 1) && !defined(__DOXYGEN__)
 extern nsd_spim_drv_t NSD_SPIM0;
 #endif
 
-#if (NSD_SPIM_USE_SPIM1 == TRUE) && !defined(__DOXYGEN__)
+#if (NSD_SPIM_USE_SPIM1 == 1) && !defined(__DOXYGEN__)
 extern nsd_spim_drv_t NSD_SPIM1;
 #endif
 
-#if (NSD_SPIM_USE_SPIM2 == TRUE) && !defined(__DOXYGEN__)
+#if (NSD_SPIM_USE_SPIM2 == 1) && !defined(__DOXYGEN__)
 extern nsd_spim_drv_t NSD_SPIM2;
 #endif
 
-#if (NSD_SPIM_USE_SPIM3 == TRUE) && !defined(__DOXYGEN__)
+#if (NSD_SPIM_USE_SPIM3 == 1) && !defined(__DOXYGEN__)
 extern nsd_spim_drv_t NSD_SPIM3;
 #endif
 
@@ -153,9 +150,9 @@ extern "C" {
    * @param[in]  p_rxbuf          Input data buffer.
    */
   void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
-                         size_t n_tx,
+                         uint32_t n_tx,
                          const void *p_txbuf,
-                         size_t n_rx,
+                         uint32_t n_rx,
                          void *p_rxbuf);
 
   /**
@@ -165,7 +162,7 @@ extern "C" {
    * @param[out] n                Output data length.
    * @param[out] p_txbuf          Output data buffer.
    */
-  void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, size_t n, const void *p_txbuf);
+  void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, uint32_t n, const void *p_txbuf);
 
   /**
    * @brief Receives data using SPIM peripheral.
@@ -174,7 +171,7 @@ extern "C" {
    * @param[in] n                 Input data length.
    * @param[in] p_rxbuf           Input data buffer.
    */
-  void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, size_t n, void *p_rxbuf);
+  void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, uint32_t n, void *p_rxbuf);
 
   /**
    * @brief Deinitializes SPIM peripheral.
@@ -205,4 +202,4 @@ extern "C" {
 
 #endif /* NSD_SPIM_ENABLED */
 
-#endif /* NSD_SPI_H */
+#endif /* NSD_SPIM_H */

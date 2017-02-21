@@ -28,11 +28,11 @@ void nsd_init(void)
 {
     nsd_mnd_init();
 
-#if (NSD_SPIM_ENABLED == TRUE) || defined(__DOXYGEN__)
+#if (NSD_SPIM_ENABLED == 1) || defined(__DOXYGEN__)
     nsd_spim_prepare();
 #endif
 
-#if (NSD_UARTE_ENABLED == TRUE) || defined(__DOXYGEN__)
+#if (NSD_UARTE_ENABLED == 1) || defined(__DOXYGEN__)
     nsd_uarte_prepare();
 #endif
 }

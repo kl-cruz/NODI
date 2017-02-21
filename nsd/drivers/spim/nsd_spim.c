@@ -22,26 +22,27 @@
  * SOFTWARE.
  */
 
-#include "nsd.h"
+#include "nsd_common.h"
+#include "nsd_spim.h"
 
-#if (NSD_SPIM_ENABLED == TRUE) || defined(__DOXYGEN__)
+#if (NSD_SPIM_ENABLED == 1) || defined(__DOXYGEN__)
 
-#if defined(NSD_CHIP_HAS_SPIM0) && (NSD_SPIM_USE_SPIM0 == TRUE) || defined(__DOXYGEN__)
+#if defined(NSD_CHIP_HAS_SPIM0) && (NSD_SPIM_USE_SPIM0 == 1) || defined(__DOXYGEN__)
 /** @brief SPIM0 driver object.*/
 nsd_spim_drv_t NSD_SPIM0;
 #endif
 
-#if defined(NSD_CHIP_HAS_SPIM1) && (NSD_SPIM_USE_SPIM1 == TRUE) || defined(__DOXYGEN__)
+#if defined(NSD_CHIP_HAS_SPIM1) && (NSD_SPIM_USE_SPIM1 == 1) || defined(__DOXYGEN__)
 /** @brief SPIM1 driver object.*/
 nsd_spim_drv_t NSD_SPIM1;
 #endif
 
-#if defined(NSD_CHIP_HAS_SPIM2) && (NSD_SPIM_USE_SPIM2 == TRUE) || defined(__DOXYGEN__)
+#if defined(NSD_CHIP_HAS_SPIM2) && (NSD_SPIM_USE_SPIM2 == 1) || defined(__DOXYGEN__)
 /** @brief SPIM1 driver object.*/
 nsd_spim_drv_t NSD_SPIM2;
 #endif
 
-#if defined(NSD_CHIP_HAS_SPIM3) && (NSD_SPIM_USE_SPIM3 == TRUE) || defined(__DOXYGEN__)
+#if defined(NSD_CHIP_HAS_SPIM3) && (NSD_SPIM_USE_SPIM3 == 1) || defined(__DOXYGEN__)
 /** @brief SPIM1 driver object.*/
 nsd_spim_drv_t NSD_SPIM3;
 #endif
@@ -50,7 +51,7 @@ void nsd_spim_irq_routine(void *p_ctx);
 
 void nsd_spim_prepare(void)
 {
-#if (NSD_SPIM_USE_SPIM0 == TRUE)
+#if (NSD_SPIM_USE_SPIM0 == 1)
     NSD_SPIM0.spim_state = NSD_SPIM_DRV_STATE_UNINIT;
     NSD_SPIM0.spi = NRF_SPIM0;
     NSD_SPIM0.irq = SPIM0_IRQn;
@@ -60,7 +61,7 @@ void nsd_spim_prepare(void)
 #endif
 #endif
 
-#if (NSD_SPIM_USE_SPIM1 == TRUE)
+#if (NSD_SPIM_USE_SPIM1 == 1)
     NSD_SPIM1.spim_state = NSD_SPIM_DRV_STATE_UNINIT;
     NSD_SPIM1.spi = NRF_SPIM1;
     NSD_SPIM1.irq = SPIM1_IRQn;
@@ -70,7 +71,7 @@ void nsd_spim_prepare(void)
 #endif
 #endif
 
-#if (NSD_SPIM_USE_SPIM2 == TRUE)
+#if (NSD_SPIM_USE_SPIM2 == 1)
     NSD_SPIM2.spim_state = NSD_SPIM_DRV_STATE_UNINIT;
     NSD_SPIM2.spi = NRF_SPIM2;
     NSD_SPIM2.irq = SPIM2_IRQn;
@@ -80,7 +81,7 @@ void nsd_spim_prepare(void)
 #endif
 #endif
 
-#if (NSD_SPIM_USE_SPIM1 == TRUE)
+#if (NSD_SPIM_USE_SPIM1 == 1)
     NSD_SPIM3.spim_state = NSD_SPIM_DRV_STATE_UNINIT;
     NSD_SPIM3.spi = NRF_SPIM3;
     NSD_SPIM3.irq = SPIM3_IRQn;
@@ -93,37 +94,34 @@ void nsd_spim_prepare(void)
 
 void nsd_spim_init(nsd_spim_drv_t *p_spim_drv)
 {
-    NRF_SPIM_Type * p_spim = p_spim_drv->spi;
+    NRF_SPIM_Type * p_reg = p_spim_drv->spi;
 
     NSD_DRV_CHECK(p_spim_drv != NULL);
     NSD_DRV_CHECK(p_spim_drv->spim_state != NSD_SPIM_DRV_STATE_UNINIT);
 
-    /* Set peripheral's pins. */
-    //TODO Consider to move pin configuration to pinmux manager
-    nrf_spim_pins_set(p_spim,
-                      p_spim_drv->config->sck_pin,
-                      p_spim_drv->config->mosi_pin,
-                      p_spim_drv->config->miso_pin);
+    /* Set pins. */
+    p_reg->PSEL.SCK  = p_spim_drv->config->sck_pin,
+    p_reg->PSEL.MOSI = p_spim_drv->config->mosi_pin,
+    p_reg->PSEL.MISO = p_spim_drv->config->miso_pin;
 
-    nrf_spim_frequency_set(p_spim,
-                           p_spim_drv->config->frequency);
+    /* Set SPIM frequency. */
+    p_reg->FREQUENCY = p_spim_drv->config->frequency;
 
-    /* Set SPI mode and bitorder*/
-    nrf_spim_configure(p_spim,
-                       p_spim_drv->config->mode,
-                       p_spim_drv->config->bit_order);
+    /* Set SPI mode and bitorder. */
+    p_reg->CONFIG = p_spim_drv->config->bit_order | p_spim_drv->config->mode;
 
     /* Set overrun character. */
-    nrf_spim_orc_set(p_spim, p_spim_drv->config->orc);
+    p_reg->ORC = p_spim_drv->config->orc;
 
     /* Set interrupt, because driver is based on interrupts. */
-    nrf_spim_event_clear(p_spim_drv->spi, NRF_SPIM_EVENT_END);
-    nrf_spim_int_disable(p_spim, 0xFFFFFFFF);
-    nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
+    p_reg->INTENCLR = 0xFFFFFFFF;
+    p_reg->EVENTS_END = 0;
+    p_reg->INTENSET = SPIM_INTENSET_END_Msk;
 
-    /* Enable peripheral */
-    nrf_spim_enable(p_spim);
+    /* Enable peripheral. */
+    p_reg->ENABLE = (SPIM_ENABLE_ENABLE_Enabled << SPIM_ENABLE_ENABLE_Pos);
 
+    /* Enable peripheral irq in NVIC. */
     nsd_common_irq_enable(p_spim_drv->irq, p_spim_drv->irq_priority);
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_READY;
@@ -131,15 +129,16 @@ void nsd_spim_init(nsd_spim_drv_t *p_spim_drv)
 
 void nsd_spim_deinit(nsd_spim_drv_t *p_spim_drv)
 {
-    NRF_SPIM_Type * p_spim = p_spim_drv->spi;
+    NRF_SPIM_Type * p_reg = p_spim_drv->spi;
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    NSD_DRV_CHECK(p_spim_drv->spim_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY);
 
-    while (p_spim_drv->spim_state != NSD_SPIM_DRV_STATE_READY);
-
+    /* Disable peripheral irq in NVIC. */
     nsd_common_irq_disable(p_spim_drv->irq);
-    nrf_spim_int_disable(p_spim, 0xFFFFFFFF);
-    nrf_spim_disable(p_spim);
+    /* Disable interrupts. */
+    p_reg->INTENCLR = 0xFFFFFFFF;
+    /* Disable peripheral. */
+    p_reg->ENABLE = (SPIM_ENABLE_ENABLE_Disabled << SPIM_ENABLE_ENABLE_Pos);
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_UNINIT;
 }
@@ -147,54 +146,64 @@ void nsd_spim_deinit(nsd_spim_drv_t *p_spim_drv)
 void nsd_spim_select(nsd_spim_drv_t *p_spim_drv)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    nrf_gpio_pin_clear(p_spim_drv->config->cs_pin);
+    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY);
+    nsd_gpio_clr(NSD_GPIO_P0, p_spim_drv->config->cs_pin);
 }
 
 void nsd_spim_unselect(nsd_spim_drv_t *p_spim_drv)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    while (p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_BUSY);
-    nrf_gpio_pin_set(p_spim_drv->config->cs_pin);
+    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_ENDTRX);
+    nsd_gpio_set(NSD_GPIO_P0, p_spim_drv->config->cs_pin);
 }
 
 void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
-                      size_t n_tx,
-                      const void *p_txbuf,
-                      size_t n_rx,
-                      void *p_rxbuf)
+                       uint32_t n_tx,
+                       const void *p_txbuf,
+                       uint32_t n_rx,
+                       void *p_rxbuf)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    nrf_spim_tx_buffer_set(p_spim_drv->spi, p_txbuf, n_tx);
-    nrf_spim_rx_buffer_set(p_spim_drv->spi, p_rxbuf, n_rx);
+    NRF_SPIM_Type * p_reg = p_spim_drv->spi;
+    p_reg->TXD.PTR    = (uint32_t)p_txbuf;
+    p_reg->TXD.MAXCNT = n_tx;
+    p_reg->RXD.PTR    = (uint32_t)p_rxbuf;
+    p_reg->RXD.MAXCNT = n_rx;
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_BUSY;
-    nrf_spim_task_trigger(p_spim_drv->spi, NRF_SPIM_TASK_START);
+    p_reg->TASKS_START = 1;
 }
 
-void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, size_t n, const void *p_txbuf)
+void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, uint32_t n, const void *p_txbuf)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    nrf_spim_tx_buffer_set(p_spim_drv->spi, p_txbuf, n);
-    nrf_spim_rx_buffer_set(p_spim_drv->spi, NULL, 0);
+    NRF_SPIM_Type * p_reg = p_spim_drv->spi;
+    p_reg->TXD.PTR    = (uint32_t)p_txbuf;
+    p_reg->TXD.MAXCNT = n;
+    p_reg->RXD.MAXCNT = 0;
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_BUSY;
-    nrf_spim_task_trigger(p_spim_drv->spi, NRF_SPIM_TASK_START);
+    p_reg->TASKS_START = 1;
 }
 
-void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, size_t n, void *p_rxbuf)
+void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, uint32_t n, void *p_rxbuf)
 {
     NSD_DRV_CHECK(p_spim_drv != NULL);
-    nrf_spim_tx_buffer_set(p_spim_drv->spi, NULL, 0);
-    nrf_spim_rx_buffer_set(p_spim_drv->spi, p_rxbuf, n);
+    NRF_SPIM_Type * p_reg = p_spim_drv->spi;
+    p_reg->RXD.PTR    = (uint32_t)p_rxbuf;
+    p_reg->RXD.MAXCNT = n;
+    p_reg->TXD.MAXCNT = 0;
 
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_BUSY;
-    nrf_spim_task_trigger(p_spim_drv->spi, NRF_SPIM_TASK_START);
+    p_reg->TASKS_START = 1;
 }
 
 void nsd_spim_irq_routine(void *p_ctx)
 {
     nsd_spim_drv_t *p_spim_drv = (nsd_spim_drv_t *)p_ctx;
-    nrf_spim_event_clear(p_spim_drv->spi, NRF_SPIM_EVENT_END);
+    NRF_SPIM_Type * p_reg = p_spim_drv->spi;
+    p_reg->EVENTS_END = 0;
+
     p_spim_drv->spim_state = NSD_SPIM_DRV_STATE_ENDTRX;
     if (p_spim_drv->config->end_cb)
     {

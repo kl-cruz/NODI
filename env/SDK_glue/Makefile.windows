@@ -1,2 +1,0 @@
-GNU_INSTALL_ROOT := $(REPO_ROOT)/env/toolchain
-GNU_PREFIX := arm-none-eabi

@@ -22,18 +22,19 @@
  * SOFTWARE.
  */
 
-#ifndef NSD_H
-#define NSD_H
-
-#include <stdint.h>
-#include <stdlib.h>
-#include "nsd_conf.h"
-
-/* Drivers */
 #include "nsd_gpio.h"
-#include "nsd_spim.h"
-#include "nsd_uarte.h"
 
-void nsd_init(void);
+inline void nsd_gpio_config(nsd_gpio_t *p_nsd_gpio, uint32_t pin, uint32_t config_val)
+{
+    p_nsd_gpio->PIN_CNF[pin] = config_val;
+}
 
-#endif /* NSD_H */
+inline void nsd_gpio_set(nsd_gpio_t *p_nsd_gpio, uint32_t pin)
+{
+    p_nsd_gpio->OUTSET = 1UL << pin;
+}
+
+inline void nsd_gpio_clr(nsd_gpio_t *p_nsd_gpio, uint32_t pin)
+{
+    p_nsd_gpio->OUTCLR = 1UL << pin;
+}

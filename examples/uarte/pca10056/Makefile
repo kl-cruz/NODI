@@ -2,13 +2,13 @@ PROJECT_NAME     := nsd_uarte_example_pca10056
 TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
-SDK_ROOT := ../../../env/sdk
+CMSIS_ROOT := ../../../env/cmsis/include
 PROJ_DIR := ..
 NSD_ROOT := ../../../nsd
-REPO_ROOT := ../../..
+COMPILER_ROOT := ../../../env/toolchain
 
 # To override compiler path
-TEMPLATE_PATH := ../../../env/SDK_glue
+TOOLCHAIN_COMMON := ../../../env/SDK_glue
 
 include $(NSD_ROOT)/nsd.mk
 include $(NSD_ROOT)/device/nsd_nRF52840.mk
@@ -20,25 +20,17 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
-  $(PROJ_DIR)/main.c \
-  $(SDK_ROOT)/components/toolchain/system_nrf52840.c \
+  $(PROJ_DIR)/main.c
 
 # Include folders common to all targets
 INC_FOLDERS += \
   $(PROJ_DIR) \
-  $(SDK_ROOT)/components/toolchain/cmsis/include \
-  $(SDK_ROOT)/components/drivers_nrf/hal \
-  $(SDK_ROOT)/components/toolchain \
-  $(SDK_ROOT)/components/device \
-  $(SDK_ROOT)/components/toolchain/gcc \
-  $(REPO_ROOT)/env/SDK_glue
+  $(CMSIS_ROOT)
 
 # Libraries common to all targets
 LIB_FILES += \
 
 # C flags common to all targets
-CFLAGS += -DNSD_CHIP_NRF52840
-CFLAGS += -DNRF52840_XXAA
 CFLAGS += -DCONFIG_GPIO_AS_PINRESET
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
@@ -57,7 +49,7 @@ ASMFLAGS += -DNRF52840_XXAA
 ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
 
 # Linker flags
-LDFLAGS += -mthumb -mabi=aapcs -L $(TOOLCHAIN_COMMON) -T$(LINKER_SCRIPT)
+LDFLAGS += -mthumb -mabi=aapcs -L $(LINKFILE_COMMON) -T$(LINKER_SCRIPT)
 LDFLAGS += -mcpu=cortex-m4
 LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # let linker to dump unused sections
@@ -75,8 +67,6 @@ default: nrf52840_xxaa
 help:
 	@echo following targets are available:
 	@echo 	nrf52840_xxaa
-
-TOOLCHAIN_COMMON := $(SDK_ROOT)/components/toolchain/gcc
 
 include $(TOOLCHAIN_COMMON)/Makefile.common
 

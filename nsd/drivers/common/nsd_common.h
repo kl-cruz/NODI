@@ -25,7 +25,9 @@
 #ifndef NSD_COMMON_H
 #define NSD_COMMON_H
 
+#include "nsd_conf.h"
 #include "nsd_device.h"
+#include "nsd_gpio.h"
 
 #define NSD_DRV_CHECK(state)
 
