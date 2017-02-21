@@ -50,18 +50,16 @@ extern void main();
 char __stack[__STACK_SIZE] __attribute__ ((section(".stack")));
 char __heap[__HEAP_SIZE] __attribute__ ((section(".heap")));
 
-#ifndef __DEFAULT_IRQ_HANDLER_REDEFINED
 /**
  * @brief Default irq handler executing if other irq is not defined.
  */
-void default_irq_handler()
+__attribute__((weak)) void default_irq_handler()
 {
     while (1)
     {
         /* Just while */
     }
 }
-#endif
 
 /**
  * @brief Entry point, starting after reset.
