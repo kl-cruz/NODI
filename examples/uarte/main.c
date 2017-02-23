@@ -32,9 +32,10 @@ void irq_routine(nsd_uarte_drv_t *p_uarte_drv)
 }
 
 nsd_uarte_config_s cfg = {
-    .end_cb = irq_routine,
-    .rx_pin = 3,
-    .tx_pin = 28,
+    .tx_end_cb = irq_routine,
+    .rx_end_cb = irq_routine,
+    .rx_pin = NSD_GPIO_PIN(NSD_GPIO_P0, 3),
+    .tx_pin = NSD_GPIO_PIN(NSD_GPIO_P0, 28),
     .hwfc = 0,
     .parity = 0,
     .baudrate = NSD_UARTE_BAUD_115200,
@@ -43,9 +44,9 @@ nsd_uarte_config_s cfg = {
 
 void pin_config(void)
 {
-    nsd_gpio_set(NSD_GPIO_P0, cfg.tx_pin);
-    nsd_gpio_config(NSD_GPIO_P0, cfg.tx_pin, NSD_GPIO_CFG_UART_TX);
-    nsd_gpio_config(NSD_GPIO_P0, cfg.rx_pin, NSD_GPIO_CFG_UART_RX);
+    nsd_gpio_set(NSD_GPIO_P0, cfg.tx_pin.pin);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.tx_pin.pin, NSD_GPIO_CFG_UART_TX);
+    nsd_gpio_config(NSD_GPIO_P0, cfg.rx_pin.pin, NSD_GPIO_CFG_UART_RX);
 }
 
 int main(void)

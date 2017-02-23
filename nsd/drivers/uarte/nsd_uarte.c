@@ -42,7 +42,8 @@ void nsd_uarte_irq_routine(void *p_ctx);
 void nsd_uarte_prepare(void)
 {
 #if (NSD_UARTE_USE_UARTE0 == 1)
-    NSD_UARTE0.uarte_state = NSD_UARTE_DRV_STATE_UNINIT;
+    NSD_UARTE0.uarte_rx_state = NSD_UARTE_DRV_STATE_UNINIT;
+    NSD_UARTE0.uarte_tx_state = NSD_UARTE_DRV_STATE_UNINIT;
     NSD_UARTE0.p_uarte_reg = NRF_UARTE0;
     NSD_UARTE0.irq = UARTE0_IRQn;
     NSD_UARTE0.irq_priority = NSD_UARTE_UARTE0_IRQ_PRIORITY;
@@ -52,7 +53,8 @@ void nsd_uarte_prepare(void)
 #endif
 
 #if (NSD_UARTE_USE_UARTE1 == 1)
-    NSD_UARTE1.uarte_state = NSD_UARTE_DRV_STATE_UNINIT;
+    NSD_UARTE1.uarte_rx_state = NSD_UARTE_DRV_STATE_UNINIT;
+    NSD_UARTE1.uarte_tx_state = NSD_UARTE_DRV_STATE_UNINIT;
     NSD_UARTE1.p_uarte_reg = NRF_UARTE1;
     NSD_UARTE1.irq = UARTE1_IRQn;
     NSD_UARTE1.irq_priority = NSD_UARTE_UARTE1_IRQ_PRIORITY;
@@ -70,8 +72,8 @@ void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
     NSD_DRV_CHECK(p_uarte_drv->uarte_state != NSD_UARTE_DRV_STATE_UNINIT);
 
     /* Set peripheral's pins. */
-    p_reg->PSEL.TXD = p_uarte_drv->config->tx_pin;
-    p_reg->PSEL.RXD = p_uarte_drv->config->rx_pin;
+    p_reg->PSEL.TXD = nsd_gpio_translate_periph(&p_uarte_drv->config->tx_pin);
+    p_reg->PSEL.RXD = nsd_gpio_translate_periph(&p_uarte_drv->config->rx_pin);
 
     /* Currently driver is not support flow control. Disable pins. */
     p_reg->PSEL.RTS = 0xFFFFFFFF;
@@ -87,15 +89,17 @@ void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
     p_reg->EVENTS_ENDTX = 0;
 
     p_reg->INTENCLR = 0xFFFFFFFF;
-    p_reg->INTENSET = (UARTE_INTENCLR_ENDRX_Enabled << UARTE_INTENCLR_ENDRX_Pos) |
-                      (UARTE_INTENCLR_ENDTX_Enabled << UARTE_INTENCLR_ENDTX_Pos);
+    p_reg->INTENSET = UARTE_INTENSET_ENDRX_Msk |
+                      UARTE_INTENSET_ENDTX_Msk;
 
     /* Enable peripheral */
     p_reg->ENABLE = UARTE_ENABLE_ENABLE_Enabled;
 
     nsd_common_irq_enable(p_uarte_drv->irq, p_uarte_drv->irq_priority);
 
-    p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_READY;
+    p_uarte_drv->uarte_tx_state = NSD_UARTE_DRV_STATE_READY;
+    p_uarte_drv->uarte_rx_state = NSD_UARTE_DRV_STATE_READY;
+
 }
 
 void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv)
@@ -108,7 +112,8 @@ void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv)
     p_reg->INTENCLR = 0xFFFFFFFF;
     p_reg->ENABLE = UARTE_ENABLE_ENABLE_Disabled;
 
-    p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_UNINIT;
+    p_uarte_drv->uarte_tx_state = NSD_UARTE_DRV_STATE_UNINIT;
+    p_uarte_drv->uarte_rx_state = NSD_UARTE_DRV_STATE_UNINIT;
 }
 
 void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *p_txbuf)
@@ -122,7 +127,7 @@ void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *
 
     p_reg->EVENTS_ENDTX = 0;
     p_reg->EVENTS_TXSTOPPED = 0;
-    p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_BUSY;
+    p_uarte_drv->uarte_tx_state = NSD_UARTE_DRV_STATE_BUSY;
     p_reg->TASKS_STARTTX = 1;
 }
 
@@ -131,41 +136,91 @@ void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv)
     NSD_DRV_CHECK(p_uarte_drv != NULL);
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
+    p_reg->INTENCLR = UARTE_INTENCLR_ENDRX_Msk |
+                      UARTE_INTENCLR_ERROR_Msk;
     p_reg->TASKS_STOPTX = 1;
+    p_uarte_drv->uarte_tx_state = NSD_UARTE_DRV_STATE_READY;
 }
 
 uint32_t nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv)
 {
-    return 0;
+    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    return p_uarte_drv->uarte_tx_state == NSD_UARTE_DRV_STATE_BUSY ? 1 : 0;
 }
 
 void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_rxbuf)
 {
+    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    NSD_DRV_CHECK(p_rxbuf != NULL);
+    NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
+    p_reg->RXD.PTR    = (uint32_t)p_rxbuf;
+    p_reg->RXD.MAXCNT = n;
+
+    p_reg->EVENTS_ENDRX = 0;
+    p_uarte_drv->uarte_rx_state = NSD_UARTE_DRV_STATE_BUSY;
+    p_reg->TASKS_STARTRX = 1;
 }
 
 void nsd_uarte_receive_stop(nsd_uarte_drv_t *p_uarte_drv)
 {
+    NSD_DRV_CHECK(p_uarte_drv != NULL);
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
+
+    p_reg->INTENCLR = UARTE_INTENCLR_ENDTX_Msk |
+                      UARTE_INTENCLR_ERROR_Msk;
+
     p_reg->TASKS_STOPRX = 1;
 }
 
 uint32_t nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv)
 {
-    return 0;
+    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    return p_uarte_drv->uarte_rx_state == NSD_UARTE_DRV_STATE_BUSY ? 1 : 0;
 }
 
 void nsd_uarte_irq_routine(void *p_ctx)
 {
+    NSD_DRV_CHECK(p_ctx != NULL);
     nsd_uarte_drv_t *p_uarte_drv = (nsd_uarte_drv_t *) p_ctx;
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
-    p_reg->EVENTS_ENDTX = 0;
-    p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_BUSY;
-    if (p_uarte_drv->config->end_cb)
+    if (p_reg->EVENTS_ENDTX == 1)
     {
-        p_uarte_drv->config->end_cb(p_uarte_drv);
+        p_reg->EVENTS_ENDTX = 0;
+        /* Set finish state to indicate operation end. */
+        p_uarte_drv->uarte_tx_state = NSD_UARTE_DRV_STATE_FINISH;
+
+        /* Call callback if not null. */
+        if (p_uarte_drv->config->tx_end_cb)
+        {
+            p_uarte_drv->config->tx_end_cb(p_uarte_drv);
+        }
+
+        /* Callback can start next transmission. Checking... */
+        if (p_uarte_drv->uarte_tx_state == NSD_UARTE_DRV_STATE_FINISH)
+        {
+            p_uarte_drv->uarte_tx_state = NSD_UARTE_DRV_STATE_READY;
+        }
     }
-    p_uarte_drv->uarte_state = NSD_UARTE_DRV_STATE_READY;
+
+    if (p_reg->EVENTS_ENDRX == 1)
+    {
+        p_reg->EVENTS_ENDRX = 0;
+        /* Set finish state to indicate operation end. */
+        p_uarte_drv->uarte_rx_state = NSD_UARTE_DRV_STATE_FINISH;
+
+        /* Call callback if not null. */
+        if (p_uarte_drv->config->rx_end_cb)
+        {
+            p_uarte_drv->config->rx_end_cb(p_uarte_drv);
+        }
+
+        /* Callback can start next transmission. Checking... */
+        if (p_uarte_drv->uarte_rx_state == NSD_UARTE_DRV_STATE_FINISH)
+        {
+            p_uarte_drv->uarte_rx_state = NSD_UARTE_DRV_STATE_READY;
+        }
+    }
 }
 
 #endif

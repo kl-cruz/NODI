@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#define __DEFAULT_IRQ_WEAK __attribute__ ((weak, alias("default_irq_handler")))
+#define __DEFAULT_IRQ_WEAK __attribute__ ((weak, alias("Default_Handler")))
 
 #ifndef __STACK_SIZE
 #define __STACK_SIZE 0x2000
@@ -53,7 +53,7 @@ char __heap[__HEAP_SIZE] __attribute__ ((section(".heap")));
 /**
  * @brief Default irq handler executing if other irq is not defined.
  */
-__attribute__((weak)) void default_irq_handler()
+void Default_Handler(void)
 {
     while (1)
     {

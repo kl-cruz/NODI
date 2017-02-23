@@ -40,45 +40,46 @@
 
 typedef struct nsd_uarte_drv nsd_uarte_drv_t;
 
-
 /**
- * @brief   SPI notification callback type.
+ * @brief   UARTE notification callback type.
  *
- * @param[in] p_uarte_drv      pointer to the @p nsd_uarte_drv_t object triggering the
- *                             callback
+ * @param[in] p_uarte_drv      pointer to the nsd_uarte_drv_t object triggering the callback
  */
 typedef void (*nsd_uarte_irq_callback_t)(nsd_uarte_drv_t *p_uarte_drv);
 
 
 typedef struct {
-    nsd_uarte_irq_callback_t end_cb; ///< Operation complete callback or @p NULL.
-    uint8_t                  rx_pin;
-    uint8_t                  tx_pin;
-    uint8_t                  rts_pin;
-    uint8_t                  cts_pin;
-    uint32_t     hwfc;               ///< Flow control configuration.
-    uint32_t     parity;             ///< Parity configuration.
-    uint32_t     baudrate;           ///< Baudrate.
+    nsd_uarte_irq_callback_t tx_end_cb; ///< Transmit operation complete callback or NULL.
+    nsd_uarte_irq_callback_t rx_end_cb; ///< Receive operation complete callback or NULL.
+    nsd_gpio_pin_t           rx_pin;    ///< RX pin config structure
+    nsd_gpio_pin_t           tx_pin;    ///< TX pin config structure
+    nsd_gpio_pin_t           rts_pin;   ///< RTS pin config structure
+    nsd_gpio_pin_t           cts_pin;   ///< CTS pin config structure
+    uint32_t                 hwfc;      ///< Flow control configuration.
+    uint32_t                 parity;    ///< Parity configuration.
+    uint32_t                 baudrate;  ///< Baudrate.
 } nsd_uarte_config_s;
 
 /**
- * @brief   SPIM Driver state machine possible states.
+ * @brief   UARTE Driver state machine possible states.
  */
 typedef enum {
     NSD_UARTE_DRV_STATE_UNINIT, ///< Driver is uninitialized.
     NSD_UARTE_DRV_STATE_READY,  ///< Driver is ready to start an operation.
     NSD_UARTE_DRV_STATE_BUSY,   ///< Driver is busy, executing operation.
+    NSD_UARTE_DRV_STATE_FINISH, ///< Driver finished operation.
 } nsd_uarte_state_t;
 
 /**
- * @brief   Structure representing a SPIM driver.
+ * @brief   Structure representing a UARTE driver.
  */
 struct nsd_uarte_drv {
-    const nsd_uarte_config_s   *config;       ///< Current configuration data.
-    volatile nsd_uarte_state_t  uarte_state;   ///< SPIM driver current state.
-    NRF_UARTE_Type             *p_uarte_reg;          ///< Pointer to the SPIx registers block.
-    IRQn_Type                  irq;          ///< SPI/SPIM peripheral instance IRQ number.
-    uint8_t                    irq_priority; ///< Interrupt priority.
+    const nsd_uarte_config_s   *config;         ///< Current configuration data.
+    volatile nsd_uarte_state_t  uarte_rx_state; ///< UARTE driver current state.
+    volatile nsd_uarte_state_t  uarte_tx_state; ///< UARTE driver current state.
+    NRF_UARTE_Type             *p_uarte_reg;    ///< Pointer to the UARTE registers block.
+    IRQn_Type                  irq;             ///< UARTE peripheral instance IRQ number.
+    uint8_t                    irq_priority;    ///< Interrupt priority.
 };
 
 /*===========================================================================*/
@@ -96,83 +97,83 @@ extern nsd_uarte_drv_t NSD_UARTE1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-  /**
-   * @brief Initializes structures of active drivers
-   */
-  void nsd_uarte_prepare();
+/**
+ * @brief Initializes structures of active drivers
+ */
+void nsd_uarte_prepare();
 
-  /**
-   * @brief Initializes selected peripheral.
-   *
-   * @param[in] p_uarte_drv       Pointer to structure representing UARTE driver.
-   */
-  void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv);
+/**
+ * @brief Initializes selected peripheral.
+ *
+ * @param[in] p_uarte_drv       Pointer to structure representing UARTE driver.
+ */
+void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv);
 
-  /**
-   * @brief Sends data using UARTE peripheral.
-   *
-   * @details When using nRF52 Family remember about 255 bytes hardware limitation!
-   *
-   * @param[in]  p_uarte_drv      Pointer to structure representing UARTE driver.
-   * @param[out] n                Output data length.
-   * @param[out] p_txbuf          Output data buffer.
-   */
-  void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *p_txbuf);
+/**
+ * @brief Sends data using UARTE peripheral.
+ *
+ * @details When using nRF52 Family remember about 255 bytes hardware limitation!
+ *
+ * @param[in]  p_uarte_drv      Pointer to structure representing UARTE driver.
+ * @param[out] n                Output data length.
+ * @param[out] p_txbuf          Output data buffer.
+ */
+void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *p_txbuf);
 
-  /**
-   * @brief nsd_uarte_send_stop
-   * @param p_uarte_drv
-   */
-  void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv);
+/**
+ * @brief nsd_uarte_send_stop
+ * @param p_uarte_drv
+ */
+void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv);
 
-  /**
-   * @brief nsd_uarte_send_busy_check
-   * @param p_uarte_drv
-   * @return
-   */
-  uint32_t nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv);
+/**
+ * @brief nsd_uarte_send_busy_check
+ * @param p_uarte_drv
+ * @return
+ */
+uint32_t nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv);
 
-  /**
-   * @brief Receives data using UARTE peripheral.
-   *
-   * @param[in] p_uarte_drv       Pointer to structure representing UARTE driver.
-   * @param[in] n                 Input data length.
-   * @param[in] p_rxbuf           Input data buffer.
-   */
-  void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_rxbuf);
+/**
+ * @brief Receives data using UARTE peripheral.
+ *
+ * @param[in] p_uarte_drv       Pointer to structure representing UARTE driver.
+ * @param[in] n                 Input data length.
+ * @param[in] p_rxbuf           Input data buffer.
+ */
+void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_rxbuf);
 
-  /**
-   * @brief nsd_uarte_receive_stop
-   * @param p_uarte_drv
-   */
-  void nsd_uarte_receive_stop(nsd_uarte_drv_t *p_uarte_drv);
+/**
+ * @brief nsd_uarte_receive_stop
+ * @param p_uarte_drv
+ */
+void nsd_uarte_receive_stop(nsd_uarte_drv_t *p_uarte_drv);
 
-  /**
-   * @brief nsd_uarte_receive_busy_check
-   * @param p_uarte_drv
-   * @return
-   */
-  uint32_t nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv);
+/**
+ * @brief nsd_uarte_receive_busy_check
+ * @param p_uarte_drv
+ * @return
+ */
+uint32_t nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv);
 
-  /**
-   * @brief Deinitializes UARTE peripheral.
-   *
-   * @param[in] p_uarte_drv       Pointer to structure representing UARTE driver.
-   */
-  void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv);
+/**
+ * @brief Deinitializes UARTE peripheral.
+ *
+ * @param[in] p_uarte_drv       Pointer to structure representing UARTE driver.
+ */
+void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv);
 
 #ifdef NSD_UARTE_DISABLE_IRQ_CONNECT
 
-  /**
-   * @brief UARTE interrupt service routine.
-   *
-   * @details This interrupt routine should be connect to interrupt system used in specific
-   *          environment.To use direct connection between IRQ and this function, undefine
-   *          NSD_UARTE_DISABLE_IRQ_CONNECT define.
-   *
-   * @param[in] p_ctx             Pointer context internally casted to structure representing UARTE driver.
-   */
-  void nsd_uarte_irq_routine(void *p_ctx);
+/**
+ * @brief UARTE interrupt service routine.
+ *
+ * @details This interrupt routine should be connect to interrupt system used in specific
+ *          environment.To use direct connection between IRQ and this function, undefine
+ *          NSD_UARTE_DISABLE_IRQ_CONNECT define.
+ *
+ * @param[in] p_ctx             Pointer context internally casted to structure representing UARTE driver.
+ */
+void nsd_uarte_irq_routine(void *p_ctx);
 
 #endif
 

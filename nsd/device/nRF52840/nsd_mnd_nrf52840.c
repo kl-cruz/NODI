@@ -66,13 +66,19 @@ static nsd_nmd_nvic_irq_t nvic_irq_array[NSD_MND_NVIC_IRQ_COUNT] __attribute__((
 /*===========================================================================*/
 /* Micro NVIC Dispatcher local functions.                                    */
 /*===========================================================================*/
-static void nsd_mnd_nvic_routine(void)
+
+/* Extern default handler to change it in init function. */
+extern void Default_Handler(void);
+
+/**
+ * @brief Redefined weak default interrupt handler - Default_Handler
+ */
+void nsd_mnd_nvic_default_handler(void)
 {
     uint32_t curr_irq = __get_IPSR();
     nsd_mnd_irq_pair_array[NSD_MND_IPSR_TO_IDX(curr_irq)].irq_routine(
             nsd_mnd_irq_pair_array[NSD_MND_IPSR_TO_IDX(curr_irq)].p_ctx);
 }
-
 
 static void nsd_mnd_default_routine(void * p_ctx)
 {
@@ -88,6 +94,21 @@ static void nsd_mnd_default_routine(void * p_ctx)
 void nsd_mnd_init(void)
 {
     uint32_t i;
+
+    const nsd_nmd_nvic_irq_t * p_irq_vtor = (const nsd_nmd_nvic_irq_t *)SCB->VTOR;
+    /* Address 0x00 has value of stack top. We have to take next element. */
+    p_irq_vtor++;
+
+    /* Copy existing vector table. */
+    for (i = 0; i < NSD_MND_NVIC_IRQ_COUNT; ++i)
+    {
+        /* Change default handler into mnd default handler. Keep other handlers. */
+        nvic_irq_array[i] = p_irq_vtor[i] == Default_Handler ?
+                    nsd_mnd_nvic_default_handler :
+                    p_irq_vtor[i];
+    }
+
+    /* Set new vector table. */
     SCB->VTOR = ((uint32_t)(nvic_irq_array) & (uint32_t)0xFFFFFFC0);
 
     /* Connect default handler for every interrupt in dispatcher. */
@@ -96,11 +117,6 @@ void nsd_mnd_init(void)
         nsd_mnd_irq_pair_array[i].irq_routine = nsd_mnd_default_routine;
     }
 
-    /* Connect default handler for every interrupt in NVIC. */
-    for (i = 0; i < NSD_MND_NVIC_IRQ_COUNT; ++i)
-    {
-        nvic_irq_array[i] = nsd_mnd_nvic_routine;
-    }
 
 }
 

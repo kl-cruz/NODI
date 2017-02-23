@@ -37,34 +37,34 @@ void irq_routine(nsd_spim_drv_t *p_spim_drv)
 
 nsd_spim_config_s cfg = {
     .bit_order = NSD_SPIM_BIT_ORDER_MSB_FIRST,
-    .cs_pin = 3,
     .end_cb = irq_routine,
     .frequency = NSD_SPIM_FREQ_125K,
-    .miso_pin = 4,
     .mode = NSD_SPIM_MODE_0,
-    .mosi_pin = 28,
     .orc = 0x00,
-    .sck_pin = 29,
+    .cs_pin = NSD_GPIO_PIN(NSD_GPIO_P0, 3),
+    .miso_pin = NSD_GPIO_PIN(NSD_GPIO_P0, 4),
+    .mosi_pin = NSD_GPIO_PIN(NSD_GPIO_P0, 28),
+    .sck_pin = NSD_GPIO_PIN(NSD_GPIO_P0, 29),
 };
 
 
 void pin_config(void)
 {
-    if (cfg.mode <= NSD_SPIM_MODE_1)
+    if ((cfg.mode == NSD_SPIM_MODE_0) || (cfg.mode == NSD_SPIM_MODE_1))
     {
-        nsd_gpio_clr(NSD_GPIO_P0, cfg.sck_pin);
+        nsd_gpio_clr(NSD_GPIO_P0, cfg.sck_pin.pin);
     }
     else
     {
-        nsd_gpio_set(NSD_GPIO_P0, cfg.sck_pin);
+        nsd_gpio_set(NSD_GPIO_P0, cfg.sck_pin.pin);
     }
 
-    nsd_gpio_config(NSD_GPIO_P0, cfg.sck_pin, NSD_GPIO_CFG_SPI_SCK);
-    nsd_gpio_config(NSD_GPIO_P0, cfg.mosi_pin, NSD_GPIO_CFG_SPI_MOSI);
-    nsd_gpio_config(NSD_GPIO_P0, cfg.miso_pin, NSD_GPIO_CFG_SPI_MISO);
+    nsd_gpio_config(cfg.sck_pin.p_port, cfg.sck_pin.pin, NSD_GPIO_CFG_SPI_SCK);
+    nsd_gpio_config(cfg.mosi_pin.p_port, cfg.mosi_pin.pin, NSD_GPIO_CFG_SPI_MOSI);
+    nsd_gpio_config(cfg.miso_pin.p_port, cfg.miso_pin.pin, NSD_GPIO_CFG_SPI_MISO);
 
-    nsd_gpio_set(NSD_GPIO_P0, cfg.cs_pin);
-    nsd_gpio_config(NSD_GPIO_P0, cfg.cs_pin, NSD_GPIO_CFG_SPI_CS);
+    nsd_gpio_set(cfg.cs_pin.p_port, cfg.cs_pin.pin);
+    nsd_gpio_config(cfg.cs_pin.p_port, cfg.cs_pin.pin, NSD_GPIO_CFG_SPI_CS);
 }
 
 

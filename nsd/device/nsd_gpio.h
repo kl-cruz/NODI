@@ -27,10 +27,19 @@
 
 #include "nsd_device.h"
 
+#define NSD_GPIO_PIN(_port, _pin) {.p_port = _port, .pin=_pin}
+
+typedef struct {
+    nsd_gpio_t *p_port;
+    uint32_t pin;
+} nsd_gpio_pin_t;
+
 void nsd_gpio_config(nsd_gpio_t *p_nsd_gpio, uint32_t pin, uint32_t config_val);
 
 void nsd_gpio_set(nsd_gpio_t *p_nsd_gpio, uint32_t pin);
 
 void nsd_gpio_clr(nsd_gpio_t *p_nsd_gpio, uint32_t pin);
+
+uint32_t nsd_gpio_translate_periph(nsd_gpio_pin_t const *p_pin);
 
 #endif // NSD_GPIO_H
