@@ -22,19 +22,35 @@
  * SOFTWARE.
  */
 
-#ifndef NSD_H
-#define NSD_H
+#ifndef NSD_CONF_H
+#define NSD_CONF_H
 
-#include <stdint.h>
-#include <stdlib.h>
-#include "nsd_conf.h"
+/* Enable/Disable MCU peripherals */
+#define NSD_SPIM_ENABLED                       0
+#define NSD_UARTE_ENABLED                      0
+#define NSD_PWR_CLK_ENABLED                    1
 
-/* Drivers */
-#include "nsd_pwr_clk.h"
-#include "nsd_gpio.h"
-#include "nsd_spim.h"
-#include "nsd_uarte.h"
+/* POWER/CLOCK driver configuration */
+#define NSD_POWER_CLOCK_IRQ_PRIORITY           7
 
-void nsd_init(void);
+/* SPIM driver configuration */
+#define NSD_SPIM_USE_SPIM0                     0
+#define NSD_SPIM_SPIM0_IRQ_PRIORITY            7
 
-#endif /* NSD_H */
+#define NSD_SPIM_USE_SPIM1                     0
+#define NSD_SPIM_SPIM1_IRQ_PRIORITY            7
+
+#define NSD_SPIM_USE_SPIM2                     0
+#define NSD_SPIM_SPIM2_IRQ_PRIORITY            7
+
+#define NSD_SPIM_USE_SPIM3                     0
+#define NSD_SPIM_SPIM3_IRQ_PRIORITY            7
+
+/* UARTE driver configuration */
+#define NSD_UARTE_USE_UARTE0                   1
+#define NSD_UARTE_UARTE0_IRQ_PRIORITY          7
+
+#define NSD_UARTE_USE_UARTE1                   0
+#define NSD_UARTE_UARTE1_IRQ_PRIORITY          7
+
+#endif // NSD_CONF_H

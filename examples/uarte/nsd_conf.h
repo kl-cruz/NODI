@@ -28,6 +28,10 @@
 /* Enable/Disable MCU peripherals */
 #define NSD_SPIM_ENABLED                       0
 #define NSD_UARTE_ENABLED                      1
+#define NSD_PWR_CLK_ENABLED                    1
+
+/* POWER/CLOCK driver configuration */
+#define NSD_POWER_CLOCK_IRQ_PRIORITY           7
 
 /* SPIM driver configuration */
 #define NSD_SPIM_USE_SPIM0                     0

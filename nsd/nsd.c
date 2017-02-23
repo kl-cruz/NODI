@@ -28,6 +28,10 @@ void nsd_init(void)
 {
     nsd_mnd_init();
 
+#if (NSD_PWR_CLK_ENABLED == 1) || defined(__DOXYGEN__)
+    nsd_pwr_clk_prepare();
+#endif
+
 #if (NSD_SPIM_ENABLED == 1) || defined(__DOXYGEN__)
     nsd_spim_prepare();
 #endif
