@@ -73,9 +73,6 @@ __attribute__((naked)) void Reset_Handler()
     /* Pointer to bss start point. */
     unsigned long *p_bss_start;
 
-    /* Set up the stack pointer. */
-    __asm("ldr sp,=__StackTop\n\t");
-
     /* Copy initialized data section. */
     p_data_src = &__etext;
     p_data_dest = &__data_start__;

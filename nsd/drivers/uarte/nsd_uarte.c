@@ -47,7 +47,7 @@ void nsd_uarte_prepare(void)
     NSD_UARTE0.p_uarte_reg = NRF_UARTE0;
     NSD_UARTE0.irq = UARTE0_IRQn;
     NSD_UARTE0.irq_priority = NSD_UARTE_UARTE0_IRQ_PRIORITY;
-#ifndef NSD_SPIM_DISABLE_IRQ_CONNECT
+#ifndef NSD_UARTE_DISABLE_IRQ_CONNECT
     nsd_mnd_register(nsd_uarte_irq_routine, &NSD_UARTE0, UARTE0_IRQn);
 #endif
 #endif
@@ -58,7 +58,7 @@ void nsd_uarte_prepare(void)
     NSD_UARTE1.p_uarte_reg = NRF_UARTE1;
     NSD_UARTE1.irq = UARTE1_IRQn;
     NSD_UARTE1.irq_priority = NSD_UARTE_UARTE1_IRQ_PRIORITY;
-#ifndef NSD_SPIM_DISABLE_IRQ_CONNECT
+#ifndef NSD_UARTE_DISABLE_IRQ_CONNECT
     nsd_mnd_register(nsd_uarte_irq_routine, &NSD_UARTE1, UARTE1_IRQn);
 #endif
 #endif
