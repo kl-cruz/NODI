@@ -47,7 +47,8 @@ void nsd_pwr_clk_init(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
 {
     NRF_CLOCK->INTENCLR = 0xFFFFFFFF;
     NRF_POWER->INTENCLR = 0xFFFFFFFF;
-    NRF_CLOCK->INTENSET = CLOCK_INTENSET_HFCLKSTARTED_Enabled;
+    NRF_CLOCK->INTENSET = (CLOCK_INTENSET_HFCLKSTARTED_Enabled << CLOCK_INTENSET_HFCLKSTARTED_Pos) |
+                          (CLOCK_INTENSET_LFCLKSTARTED_Enabled << CLOCK_INTENSET_LFCLKSTARTED_Pos);
     nsd_common_irq_enable(POWER_CLOCK_IRQn, p_pwr_clk_drv->irq_priority);
 }
 
@@ -57,9 +58,55 @@ void nsd_clk_hfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
     NRF_CLOCK->TASKS_HFCLKSTART = 1;
 }
 
-void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
+bool nsd_clk_lfclk_is_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
+{
+    return ((NRF_CLOCK->LFCLKRUN &
+               (CLOCK_LFCLKRUN_STATUS_Triggered << CLOCK_LFCLKRUN_STATUS_Pos)) != 0) ||
+           ((NRF_CLOCK->LFCLKSTAT &
+               (CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos)) != 0);
+}
+
+bool nsd_clk_hfclk_is_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
+{
+    return ((NRF_CLOCK->HFCLKRUN &
+               (CLOCK_HFCLKRUN_STATUS_Triggered << CLOCK_HFCLKRUN_STATUS_Pos)) != 0) ||
+           ((NRF_CLOCK->HFCLKSTAT &
+               (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) != 0);
+}
+
+void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv, nsd_pwr_clk_lfclk_src_t src)
 {
     NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+    switch (src) {
+        case NSD_PWR_CLK_LFCLK_SRC_RC:
+            NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_RC << CLOCK_LFCLKSRC_SRC_Pos) |
+                                  (CLOCK_LFCLKSRC_BYPASS_Disabled << CLOCK_LFCLKSRC_BYPASS_Pos) |
+                                  (CLOCK_LFCLKSRC_EXTERNAL_Disabled << CLOCK_LFCLKSRC_EXTERNAL_Pos);
+            break;
+        case NSD_PWR_CLK_LFCLK_SRC_XTAL:
+            NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos) |
+                                  (CLOCK_LFCLKSRC_BYPASS_Disabled << CLOCK_LFCLKSRC_BYPASS_Pos) |
+                                  (CLOCK_LFCLKSRC_EXTERNAL_Disabled << CLOCK_LFCLKSRC_EXTERNAL_Pos);
+            break;
+        case NSD_PWR_CLK_LFCLK_SRC_SYNTH:
+            NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_Synth << CLOCK_LFCLKSRC_SRC_Pos) |
+                                  (CLOCK_LFCLKSRC_BYPASS_Disabled << CLOCK_LFCLKSRC_BYPASS_Pos) |
+                                  (CLOCK_LFCLKSRC_EXTERNAL_Disabled << CLOCK_LFCLKSRC_EXTERNAL_Pos);
+            break;
+        case NSD_PWR_CLK_LFCLK_SRC_LOW_SWING_XL1_GND_XL2:
+            NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos) |
+                                  (CLOCK_LFCLKSRC_BYPASS_Disabled << CLOCK_LFCLKSRC_BYPASS_Pos) |
+                                  (CLOCK_LFCLKSRC_EXTERNAL_Enabled << CLOCK_LFCLKSRC_EXTERNAL_Pos);
+            break;
+        case NSD_PWR_CLK_LFCLK_SRC_FULL_SWING_XL1_NO_XL2:
+            NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos) |
+                                  (CLOCK_LFCLKSRC_BYPASS_Enabled << CLOCK_LFCLKSRC_BYPASS_Pos) |
+                                  (CLOCK_LFCLKSRC_EXTERNAL_Enabled << CLOCK_LFCLKSRC_EXTERNAL_Pos);
+            break;
+        default:
+            NRF_CLOCK->LFCLKSRC = 0x00000000;
+        break;
+    }
     NRF_CLOCK->TASKS_LFCLKSTART = 1;
 }
 

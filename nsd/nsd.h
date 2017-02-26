@@ -32,6 +32,7 @@
 /* Drivers */
 #include "nsd_pwr_clk.h"
 #include "nsd_gpio.h"
+#include "nsd_rtc.h"
 #include "nsd_spim.h"
 #include "nsd_uarte.h"
 

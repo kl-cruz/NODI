@@ -36,6 +36,10 @@ void nsd_init(void)
     nsd_spim_prepare();
 #endif
 
+#if (NSD_RTC_ENABLED == 1) || defined(__DOXYGEN__)
+    nsd_spim_prepare();
+#endif
+
 #if (NSD_UARTE_ENABLED == 1) || defined(__DOXYGEN__)
     nsd_uarte_prepare();
 #endif

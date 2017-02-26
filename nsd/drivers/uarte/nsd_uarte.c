@@ -69,7 +69,8 @@ void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_state != NSD_UARTE_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv->uarte_rx_state != NSD_UARTE_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_UARTE_DRV_STATE_UNINIT);
 
     /* Set peripheral's pins. */
     p_reg->PSEL.TXD = nsd_gpio_translate_periph(&p_uarte_drv->config->tx_pin);
@@ -105,7 +106,9 @@ void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
 void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv)
 {
     NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv->uarte_rx_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_SPIM_DRV_STATE_UNINIT);
+
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     nsd_common_irq_disable(p_uarte_drv->irq);
@@ -120,6 +123,8 @@ void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *
 {
     NSD_DRV_CHECK(p_uarte_drv != NULL);
     NSD_DRV_CHECK(p_txbuf != NULL);
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_SPIM_DRV_STATE_UNINIT);
+
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     p_reg->TXD.PTR    = (uint32_t)p_txbuf;
@@ -134,6 +139,8 @@ void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *
 void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv)
 {
     NSD_DRV_CHECK(p_uarte_drv != NULL);
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_SPIM_DRV_STATE_UNINIT);
+
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     p_reg->INTENCLR = UARTE_INTENCLR_ENDRX_Msk |

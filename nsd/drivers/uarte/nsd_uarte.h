@@ -78,8 +78,8 @@ struct nsd_uarte_drv {
     volatile nsd_uarte_state_t  uarte_rx_state; ///< UARTE driver current state.
     volatile nsd_uarte_state_t  uarte_tx_state; ///< UARTE driver current state.
     NRF_UARTE_Type             *p_uarte_reg;    ///< Pointer to the UARTE registers block.
-    IRQn_Type                  irq;             ///< UARTE peripheral instance IRQ number.
-    uint8_t                    irq_priority;    ///< Interrupt priority.
+    IRQn_Type                   irq;            ///< UARTE peripheral instance IRQ number.
+    uint8_t                     irq_priority;   ///< Interrupt priority.
 };
 
 /*===========================================================================*/

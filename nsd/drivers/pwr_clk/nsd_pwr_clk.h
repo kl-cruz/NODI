@@ -42,6 +42,14 @@ typedef enum {
     NSD_PWR_CLK_LFCLK_STATE_RUNNING_RC_LOW_POWER,
 } nsd_pwr_clk_lfclk_state_t;
 
+typedef enum {
+    NSD_PWR_CLK_LFCLK_SRC_RC,
+    NSD_PWR_CLK_LFCLK_SRC_XTAL,
+    NSD_PWR_CLK_LFCLK_SRC_SYNTH,
+    NSD_PWR_CLK_LFCLK_SRC_LOW_SWING_XL1_GND_XL2,
+    NSD_PWR_CLK_LFCLK_SRC_FULL_SWING_XL1_NO_XL2,
+} nsd_pwr_clk_lfclk_src_t;
+
 typedef struct nsd_pwr_clk_drv nsd_pwr_clk_drv_t;
 
 /**
@@ -104,7 +112,7 @@ void nsd_clk_hfclk_stop(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
  * @brief Starts selected clock.
  *
  */
-void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
+void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv, nsd_pwr_clk_lfclk_src_t src);
 
 /**
  * @brief Starts selected clock.

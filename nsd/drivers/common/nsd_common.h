@@ -25,6 +25,7 @@
 #ifndef NSD_COMMON_H
 #define NSD_COMMON_H
 
+#include <stdbool.h>
 #include "nsd_conf.h"
 #include "nsd_device.h"
 #include "nsd_gpio.h"
