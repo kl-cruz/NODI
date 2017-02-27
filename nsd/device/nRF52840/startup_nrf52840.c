@@ -41,14 +41,24 @@ extern unsigned long __data_end__;
 extern unsigned long __StackTop;
 
 /* Functions using to init std lib, system init and start app. */
-extern void __libc_init_array();
 extern void SystemInit();
-extern void main();
+
+#if defined(__GNUC__)
+    void _start(void)    __attribute__((noreturn));
+#   define ENTRY_POINT() _start()
+
+#elif defined(__CC_ARM)
+    void __main(void)    __attribute__((noreturn));
+#   define ENTRY_POINT() __main()
+
+#else
+#   error "Unsupported compiler."
+#endif
 
 /* Set up stack and heap. */
 
-char __stack[__STACK_SIZE] __attribute__ ((section(".stack")));
-char __heap[__HEAP_SIZE] __attribute__ ((section(".heap")));
+char __stack[__STACK_SIZE] __attribute__ ((used, section(".stack")));
+char __heap[__HEAP_SIZE] __attribute__ ((used, section(".heap")));
 
 /**
  * @brief Default irq handler executing if other irq is not defined.
@@ -71,7 +81,9 @@ __attribute__((naked)) void Reset_Handler()
     unsigned long *p_data_dest;
 
     /* Pointer to bss start point. */
+#ifdef __STARTUP_CLEAR_BSS
     unsigned long *p_bss_start;
+#endif
 
     /* Copy initialized data section. */
     p_data_src = &__etext;
@@ -83,21 +95,20 @@ __attribute__((naked)) void Reset_Handler()
     }
 
     /* Clear BSS section. */
+#ifdef __STARTUP_CLEAR_BSS
     p_bss_start = &__bss_start__;
 
     while (p_bss_start != &__bss_end__)
     {
         *(p_bss_start++) = 0;
     }
+#endif
 
     /* Initialize MCU, apply erratas. */
     SystemInit();
 
-    /* Run constructors. */
-    __libc_init_array();
-
     /* Call the application's entry point. */
-    main();
+    ENTRY_POINT();
 
     /* If something goes wrong, catch execution in while loop. */
     while (1);

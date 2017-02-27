@@ -38,7 +38,11 @@
 #define NSD_GPIO_P1         NRF_P1
 
 /* SPIM subsystem */
-//#include "nrf_spim.h"
+#define NSD_CHIP_HAS_RTC0
+#define NSD_CHIP_HAS_RTC1
+#define NSD_CHIP_HAS_RTC2
+
+/* SPIM subsystem */
 #define NSD_CHIP_HAS_SPIM0
 #define SPIM0_IRQn          SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn
 #define SPIM0_IRQHandler    SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler
@@ -53,7 +57,6 @@
 #define SPIM3_IRQHandler    SPIM3_IRQHandler
 
 /* UARTE subsystem */
-//#include "nrf_uarte.h"
 #define NSD_CHIP_HAS_UARTE0
 #define UARTE0_IRQn          UARTE0_UART0_IRQn
 #define UARTE0_IRQHandler    UARTE0_UART0_IRQHandler

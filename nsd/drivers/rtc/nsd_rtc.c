@@ -79,15 +79,15 @@ void nsd_rtc_prepare(void)
 
 void nsd_rtc_init(nsd_rtc_drv_t *p_rtc_drv)
 {
-    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
-
     NSD_DRV_CHECK(p_rtc_drv != NULL);
     NSD_DRV_CHECK(p_rtc_drv->config != NULL);
     NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_UNINIT);
     NSD_DRV_CHECK(p_rtc_drv->config->prescaler & RTC_PRESCALER_PRESCALER_Msk == 0);
 
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+
     /* Set up prescaler. */
-    p_reg->PRESCALER = p_rtc_drv->config->baudrate;
+    p_reg->PRESCALER = p_rtc_drv->config->prescaler;
 
     /* Set interrupt, because driver is based on interrupts. */
     p_reg->EVENTS_TICK = 0;
@@ -98,42 +98,126 @@ void nsd_rtc_init(nsd_rtc_drv_t *p_rtc_drv)
     p_reg->EVENTS_COMPARE[3] = 0;
 
     p_reg->INTENCLR = 0xFFFFFFFF;
-    p_reg->INTENSET = RTC_INTENSET_ENDRX_Msk |
-                      RTC_INTENSET_ENDTX_Msk;
-
-    /* Enable peripheral */
-    p_reg->ENABLE = RTC_ENABLE_ENABLE_Enabled;
 
     nsd_common_irq_enable(p_rtc_drv->irq, p_rtc_drv->irq_priority);
-
-    p_rtc_drv->uarte_tx_state = NSD_RTC_DRV_STATE_READY;
-    p_rtc_drv->uarte_rx_state = NSD_RTC_DRV_STATE_READY;
+    p_rtc_drv->state = NSD_RTC_DRV_STATE_STOPPED;
 
 }
 
 void nsd_rtc_evt_enable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
 {
+    NSD_DRV_CHECK(p_rtc_drv != NULL);
 
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+    uint32_t evts_reg = 0;
+    switch( evt)
+    {
+    case NSD_RTC_DRV_CB_EVT_TICK:
+        p_reg->EVENTS_TICK = 0;
+        evts_reg = RTC_INTENSET_TICK_Set << RTC_INTENSET_TICK_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_OVERFLOW:
+        p_reg->EVENTS_OVRFLW = 0;
+        evts_reg = RTC_INTENSET_OVRFLW_Set << RTC_INTENSET_OVRFLW_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP0:
+        p_reg->EVENTS_COMPARE[0] = 0;
+        evts_reg = RTC_INTENSET_COMPARE0_Set << RTC_INTENSET_COMPARE0_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP1:
+        p_reg->EVENTS_COMPARE[1] = 0;
+        evts_reg = RTC_INTENSET_COMPARE1_Set << RTC_INTENSET_COMPARE1_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP2:
+        p_reg->EVENTS_COMPARE[2] = 0;
+        evts_reg = RTC_INTENSET_COMPARE2_Set << RTC_INTENSET_COMPARE2_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP3:
+        p_reg->EVENTS_COMPARE[3] = 0;
+        evts_reg = RTC_INTENSET_COMPARE3_Set << RTC_INTENSET_COMPARE3_Pos;
+        break;
+    default:
+        break;
+    }
+
+    p_reg->EVTENSET = evts_reg;
+    p_reg->INTENSET = evts_reg;
 }
 
 void nsd_rtc_evt_disable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
 {
+    NSD_DRV_CHECK(p_rtc_drv != NULL);
 
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+    uint32_t evts_reg = 0;
+    switch( evt)
+    {
+    case NSD_RTC_DRV_CB_EVT_TICK:
+        evts_reg = RTC_INTENCLR_TICK_Clear << RTC_INTENCLR_TICK_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_OVERFLOW:
+        evts_reg = RTC_INTENCLR_OVRFLW_Clear << RTC_INTENCLR_OVRFLW_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP0:
+        evts_reg = RTC_INTENCLR_COMPARE0_Clear << RTC_INTENCLR_COMPARE0_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP1:
+        evts_reg = RTC_INTENCLR_COMPARE1_Clear << RTC_INTENCLR_COMPARE1_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP2:
+        evts_reg = RTC_INTENCLR_COMPARE2_Clear << RTC_INTENCLR_COMPARE2_Pos;
+        break;
+    case NSD_RTC_DRV_CB_EVT_COMP3:
+        evts_reg = RTC_INTENCLR_COMPARE3_Clear << RTC_INTENCLR_COMPARE3_Pos;
+        break;
+    default:
+        break;
+    }
+
+    p_reg->EVTENCLR = evts_reg;
+    p_reg->INTENCLR = evts_reg;
 }
 
 void nsd_rtc_start(nsd_rtc_drv_t *p_rtc_drv)
 {
+    NSD_DRV_CHECK(p_rtc_drv != NULL);
+    NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_STARTED);
 
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+    p_reg->TASKS_START = 1;
+    p_rtc_drv->state = NSD_RTC_DRV_STATE_STARTED;
 }
 
 void nsd_rtc_stop(nsd_rtc_drv_t *p_rtc_drv)
 {
+    NSD_DRV_CHECK(p_rtc_drv != NULL);
+    NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_STOPPED);
 
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+    p_reg->TASKS_STOP = 1;
+    p_rtc_drv->state = NSD_RTC_DRV_STATE_STOPPED;
+}
+
+inline void nsd_rtc_clear(nsd_rtc_drv_t *p_rtc_drv)
+{
+    NSD_DRV_CHECK(p_rtc_drv != NULL);
+
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+    p_reg->TASKS_CLEAR = 1;
+}
+
+inline void nsd_rtc_overflow_trigger(nsd_rtc_drv_t *p_rtc_drv)
+{
+    NSD_DRV_CHECK(p_rtc_drv != NULL);
+
+    NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+    p_reg->TASKS_TRIGOVRFLW = 1;
 }
 
 void nsd_rtc_irq_routine(void *p_ctx)
 {
     NSD_DRV_CHECK(p_ctx != NULL);
+
     nsd_rtc_drv_t *p_rtc_drv = (nsd_rtc_drv_t *) p_ctx;
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     if (p_reg->EVENTS_TICK == 1)

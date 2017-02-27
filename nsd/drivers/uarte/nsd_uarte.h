@@ -25,7 +25,7 @@
 #ifndef NSD_UARTE_H
 #define NSD_UARTE_H
 
-#include "nsd_device.h"
+#include "nsd_common.h"
 
 #if (NSD_UARTE_ENABLED == 1) || defined(__DOXYGEN__)
 #include "nsd_uarte_const.h"

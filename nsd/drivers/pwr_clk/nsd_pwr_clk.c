@@ -47,13 +47,12 @@ void nsd_pwr_clk_init(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
 {
     NRF_CLOCK->INTENCLR = 0xFFFFFFFF;
     NRF_POWER->INTENCLR = 0xFFFFFFFF;
-    NRF_CLOCK->INTENSET = (CLOCK_INTENSET_HFCLKSTARTED_Enabled << CLOCK_INTENSET_HFCLKSTARTED_Pos) |
-                          (CLOCK_INTENSET_LFCLKSTARTED_Enabled << CLOCK_INTENSET_LFCLKSTARTED_Pos);
     nsd_common_irq_enable(POWER_CLOCK_IRQn, p_pwr_clk_drv->irq_priority);
 }
 
 void nsd_clk_hfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
 {
+    NRF_CLOCK->INTENSET = CLOCK_INTENSET_HFCLKSTARTED_Enabled << CLOCK_INTENSET_HFCLKSTARTED_Pos;
     NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
     NRF_CLOCK->TASKS_HFCLKSTART = 1;
 }
@@ -76,7 +75,6 @@ bool nsd_clk_hfclk_is_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
 
 void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv, nsd_pwr_clk_lfclk_src_t src)
 {
-    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
     switch (src) {
         case NSD_PWR_CLK_LFCLK_SRC_RC:
             NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_RC << CLOCK_LFCLKSRC_SRC_Pos) |
@@ -107,6 +105,8 @@ void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv, nsd_pwr_clk_lfclk_sr
             NRF_CLOCK->LFCLKSRC = 0x00000000;
         break;
     }
+    NRF_CLOCK->INTENSET = CLOCK_INTENSET_LFCLKSTARTED_Enabled << CLOCK_INTENSET_LFCLKSTARTED_Pos;
+    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
     NRF_CLOCK->TASKS_LFCLKSTART = 1;
 }
 
@@ -118,6 +118,12 @@ void nsd_clk_hfclk_stop(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
 void nsd_clk_lfclk_stop(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
 {
     NRF_CLOCK->TASKS_LFCLKSTOP = 1;
+}
+
+bool nsd_clk_lfclk_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
+{
+    return (NRF_CLOCK->LFCLKRUN == (CLOCK_LFCLKRUN_STATUS_Triggered << CLOCK_LFCLKRUN_STATUS_Pos)) &&
+            (NRF_CLOCK->LFCLKSTAT == (CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos));
 }
 
 void nsd_pwr_clk_irq_routine(void *p_ctx)

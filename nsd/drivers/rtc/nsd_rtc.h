@@ -25,10 +25,9 @@
 #ifndef NSD_RTC_H
 #define NSD_RTC_H
 
-#include "nsd_device.h"
+#include "nsd_common.h"
 
-#if 1 || (NSD_RTC_ENABLED == 1) || defined(__DOXYGEN__)
-#include "nsd_rtc_const.h"
+#if (NSD_RTC_ENABLED == 1) || defined(__DOXYGEN__)
 
 #if !defined(NSD_RTC_USE_RTC0) || defined(__DOXYGEN__)
 #define NSD_RTC_USE_RTC0 0
@@ -73,10 +72,9 @@ typedef struct {
  * @brief   RTC Driver state machine possible states.
  */
 typedef enum {
-    NSD_RTC_DRV_STATE_UNINIT, ///< Driver is uninitialized.
-    NSD_RTC_DRV_STATE_READY,  ///< Driver is ready to start an operation.
-    NSD_RTC_DRV_STATE_BUSY,   ///< Driver is busy, executing operation.
-    NSD_RTC_DRV_STATE_FINISH, ///< Driver finished operation.
+    NSD_RTC_DRV_STATE_UNINIT,  ///< Driver is uninitialized.
+    NSD_RTC_DRV_STATE_STOPPED, ///< Driver is stopped and configured.
+    NSD_RTC_DRV_STATE_STARTED, ///< Driver is working. Cannot configure PRESCALER.
 } nsd_rtc_state_t;
 
 /**
@@ -145,6 +143,18 @@ void nsd_rtc_start(nsd_rtc_drv_t *p_rtc_drv);
  * @param p_rtc_drv
  */
 void nsd_rtc_stop(nsd_rtc_drv_t *p_rtc_drv);
+
+/**
+ * @brief nsd_rtc_clear
+ * @param p_rtc_drv
+ */
+void nsd_rtc_clear(nsd_rtc_drv_t *p_rtc_drv);
+
+/**
+ * @brief nsd_rtc_overflow_trigger
+ * @param p_rtc_drv
+ */
+void nsd_rtc_overflow_trigger(nsd_rtc_drv_t *p_rtc_drv);
 
 
 #ifdef NSD_RTC_DISABLE_IRQ_CONNECT

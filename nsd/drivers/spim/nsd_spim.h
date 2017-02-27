@@ -25,7 +25,7 @@
 #ifndef NSD_SPIM_H
 #define NSD_SPIM_H
 
-#include "nsd_device.h"
+#include "nsd_common.h"
 
 #if (NSD_SPIM_ENABLED == 1) || defined(__DOXYGEN__)
 #include "nsd_spim_const.h"

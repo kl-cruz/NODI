@@ -25,7 +25,7 @@
 #ifndef NSD_PWR_CLK_H
 #define NSD_PWR_CLK_H
 
-#include "nsd_device.h"
+#include "nsd_common.h"
 
 #if (NSD_PWR_CLK_ENABLED == 1) || defined(__DOXYGEN__)
 
@@ -119,6 +119,12 @@ void nsd_clk_lfclk_start(nsd_pwr_clk_drv_t * p_pwr_clk_drv, nsd_pwr_clk_lfclk_sr
  *
  */
 void nsd_clk_lfclk_stop(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
+
+/**
+ * @brief Starts selected clock.
+ *
+ */
+bool nsd_clk_lfclk_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
 
 #ifdef NSD_PWR_CLK_DISABLE_IRQ_CONNECT
 
