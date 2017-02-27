@@ -13,7 +13,7 @@ endif
 endif
 
 help:
-	@echo "***********  NSD MAKEFILE HELP  **********"
+	@echo "***********  NODI MAKEFILE HELP  **********"
 	@echo ""
 	@echo ""
 	@echo "USAGE:"

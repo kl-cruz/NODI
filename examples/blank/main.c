@@ -24,12 +24,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "nsd.h"
+#include "nodi.h"
 
 int main(void)
 {
-    /* Configure nsd subsystem */
-    nsd_init();
+    /* Configure nodi subsystem */
+    nodi_init();
 
     while (true)
     {

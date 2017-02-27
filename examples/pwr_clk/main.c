@@ -24,11 +24,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "nsd.h"
+#include "nodi.h"
 
-volatile bool is_started;
+volatile static bool is_started;
 
-void hfclk_handler(nsd_pwr_clk_drv_t *p_pwr_clk_drv)
+void hfclk_handler(nodi_pwr_clk_drv_t *p_pwr_clk_drv)
 {
     is_started = true;
 }
@@ -36,12 +36,12 @@ void hfclk_handler(nsd_pwr_clk_drv_t *p_pwr_clk_drv)
 int main(void)
 {
     is_started = false;
-    /* Configure nsd subsystem */
-    nsd_init();
+    /* Configure nodi subsystem */
+    nodi_init();
 
-    NSD_PWR_CLK.hfclk_cb = hfclk_handler;
-    nsd_pwr_clk_init(&NSD_PWR_CLK);
-    nsd_clk_hfclk_start(&NSD_PWR_CLK);
+    NODI_PWR_CLK.hfclk_cb = hfclk_handler;
+    nodi_pwr_clk_init(&NODI_PWR_CLK);
+    nodi_clk_hfclk_start(&NODI_PWR_CLK);
     while (!is_started);
 
     while (true)

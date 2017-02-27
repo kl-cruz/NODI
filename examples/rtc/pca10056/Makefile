@@ -1,22 +1,22 @@
-PROJECT_NAME     := nsd_rtc_example_pca10056
+PROJECT_NAME     := nodi_rtc_example_pca10056
 TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
 CMSIS_ROOT := ../../../env/cmsis/include
 PROJ_DIR := ..
-NSD_ROOT := ../../../nsd
+NODI_ROOT := ../../../nodi
 COMPILER_ROOT := ../../../env/toolchain
 
 # To override compiler path
 TOOLCHAIN_COMMON := ../../../env/SDK_glue
 
-include $(NSD_ROOT)/nsd.mk
-include $(NSD_ROOT)/device/nsd_nRF52840.mk
-INC_FOLDERS += $(NSD_INC_FOLDERS)
-SRC_FILES += $(NSD_SRC_FILES)
+include $(NODI_ROOT)/nodi.mk
+include $(NODI_ROOT)/device/nodi_nRF52840.mk
+INC_FOLDERS += $(NODI_INC_FOLDERS)
+SRC_FILES += $(NODI_SRC_FILES)
 
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
-  LINKER_SCRIPT  := nsd_rtc_example.ld
+  LINKER_SCRIPT  := nodi_rtc_example.ld
 
 # Source files common to all targets
 SRC_FILES += \
@@ -32,7 +32,7 @@ LIB_FILES += \
 
 # C flags common to all targets
 CFLAGS += -DCONFIG_GPIO_AS_PINRESET
-CFLAGS += -DNSD_DEBUG
+CFLAGS += -DNODI_DEBUG
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
 CFLAGS +=  -Wall -Werror -O3 -g3
