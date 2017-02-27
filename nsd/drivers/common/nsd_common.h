@@ -26,11 +26,25 @@
 #define NSD_COMMON_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include "nsd_conf.h"
 #include "nsd_device.h"
 #include "nsd_gpio.h"
 
-#define NSD_DRV_CHECK(state)
+#ifdef NSD_DEBUG
+#define NSD_DRV_CHECK(statement, fail_text)   nsd_common_assert(statement)
+
+__attribute__ ((used)) static void nsd_common_assert(bool statement)
+{
+    if (!statement)
+    {
+        __BKPT();
+        while(1);
+    }
+}
+#else
+#define NSD_DRV_CHECK(statement, text)
+#endif
 
 static inline void nsd_common_irq_enable(IRQn_Type IRQn, uint8_t priority)
 {

@@ -32,6 +32,7 @@ LIB_FILES += \
 
 # C flags common to all targets
 CFLAGS += -DCONFIG_GPIO_AS_PINRESET
+CFLAGS += -DNSD_DEBUG
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
 CFLAGS +=  -Wall -Werror -O3 -g3

@@ -140,8 +140,6 @@ void nsd_spim_unselect(nsd_spim_drv_t *p_spim_drv);
 /**
  * @brief   Exchanges data using SPIM peripheral.
  *
- * @details When using nRF52 Family remember about 255 bytes hardware limitation!
- *
  * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
  * @param[out] n_tx             Output data length.
  * @param[out] p_txbuf          Output data buffer.

@@ -27,28 +27,28 @@
 
 inline void nsd_gpio_config(nsd_gpio_t *p_nsd_gpio, uint32_t pin, uint32_t config_val)
 {
-    NSD_DRV_CHECK(p_nsd_gpio != NULL);
+    NSD_DRV_CHECK(p_nsd_gpio != NULL, "GPIO port is NULL!");
     p_nsd_gpio->PIN_CNF[pin] = config_val;
 }
 
 inline void nsd_gpio_set(nsd_gpio_t *p_nsd_gpio, uint32_t pin)
 {
-    NSD_DRV_CHECK(p_nsd_gpio != NULL);
-    NSD_DRV_CHECK(pin < 32);
+    NSD_DRV_CHECK(p_nsd_gpio != NULL, "GPIO port is NULL!");
+    NSD_DRV_CHECK(pin < 32, "GPIO pin > 32!");
     p_nsd_gpio->OUTSET = 1UL << pin;
 }
 
 inline void nsd_gpio_clr(nsd_gpio_t *p_nsd_gpio, uint32_t pin)
 {
-    NSD_DRV_CHECK(p_nsd_gpio != NULL);
-    NSD_DRV_CHECK(pin < 32);
+    NSD_DRV_CHECK(p_nsd_gpio != NULL, "GPIO port is NULL!");
+    NSD_DRV_CHECK(pin < 32, "GPIO pin > 32!");
     p_nsd_gpio->OUTCLR = 1UL << pin;
 }
 
 uint32_t nsd_gpio_translate_periph(nsd_gpio_pin_t const *p_pin)
 {
-    NSD_DRV_CHECK(p_pin != NULL);
-    NSD_DRV_CHECK(p_pin->pin < 32);
+    NSD_DRV_CHECK(p_pin != NULL, "GPIO port is NULL!");
+    NSD_DRV_CHECK(p_pin->pin < 32, "GPIO pin > 32!");
     if (p_pin->p_port == NSD_GPIO_P0)
     {
         return p_pin->pin;

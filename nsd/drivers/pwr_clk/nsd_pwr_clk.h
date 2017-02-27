@@ -126,6 +126,12 @@ void nsd_clk_lfclk_stop(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
  */
 bool nsd_clk_lfclk_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
 
+/**
+ * @brief Starts selected clock.
+ *
+ */
+bool nsd_clk_hfclk_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv);
+
 #ifdef NSD_PWR_CLK_DISABLE_IRQ_CONNECT
 
 /**

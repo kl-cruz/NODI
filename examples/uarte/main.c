@@ -26,16 +26,12 @@
 #include <stdint.h>
 #include "nsd.h"
 
-volatile bool is_started;
-
-void hfclk_handler(nsd_pwr_clk_drv_t *p_pwr_clk_drv)
-{
-    is_started = true;
-}
+static bool data_sent = false;
 
 void irq_routine(nsd_uarte_drv_t *p_uarte_drv)
 {
     (void)(p_uarte_drv);
+    data_sent = true;
 }
 
 nsd_uarte_config_s cfg = {
@@ -64,10 +60,9 @@ int main(void)
     nsd_init();
 
     /* Start HF clock to get ~115200 bauds */
-    NSD_PWR_CLK.hfclk_cb = hfclk_handler;
     nsd_pwr_clk_init(&NSD_PWR_CLK);
     nsd_clk_hfclk_start(&NSD_PWR_CLK);
-    while (!is_started);
+    while (!nsd_clk_hfclk_running(&NSD_PWR_CLK));
 
     /* Configure UARTE driver */
 
@@ -78,7 +73,10 @@ int main(void)
     nsd_uarte_init(&NSD_UARTE0);
     nsd_uarte_send_start(&NSD_UARTE0, 2, data);
 
-    while (true)
+    while (!data_sent);
+    nsd_uarte_deinit(&NSD_UARTE0);
+
+    while (1)
     {
     }
 }

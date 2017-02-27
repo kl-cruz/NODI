@@ -61,7 +61,7 @@ static nsd_mnd_irq_pair_t nsd_mnd_irq_pair_array[NSD_MND_IRQ_COUNT];
 /* Interrupt vector table has to be aligned to 6th bit according to:
  * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0553a/CIHFDJCA.html
  */
-static nsd_nmd_nvic_irq_t nvic_irq_array[NSD_MND_NVIC_IRQ_COUNT] __attribute__((aligned(0x40)));
+static nsd_nmd_nvic_irq_t nvic_irq_array[NSD_MND_NVIC_IRQ_COUNT] __attribute__((aligned(0x80)));
 
 /*===========================================================================*/
 /* Micro NVIC Dispatcher local functions.                                    */

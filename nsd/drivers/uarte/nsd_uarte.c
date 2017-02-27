@@ -68,9 +68,11 @@ void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
 {
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_rx_state != NSD_UARTE_DRV_STATE_UNINIT);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_UARTE_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_uarte_drv->uarte_rx_state == NSD_UARTE_DRV_STATE_UNINIT,
+                  "Driver already initialized!");
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state == NSD_UARTE_DRV_STATE_UNINIT,
+                  "Driver already initialized!");
 
     /* Set peripheral's pins. */
     p_reg->PSEL.TXD = nsd_gpio_translate_periph(&p_uarte_drv->config->tx_pin);
@@ -105,9 +107,11 @@ void nsd_uarte_init(nsd_uarte_drv_t *p_uarte_drv)
 
 void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_rx_state != NSD_SPIM_DRV_STATE_UNINIT);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_uarte_drv->uarte_rx_state != NSD_UARTE_DRV_STATE_UNINIT,
+                  "Driver is not initialized!");
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_UARTE_DRV_STATE_UNINIT,
+                  "Driver is not initialized!");
 
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
@@ -121,9 +125,10 @@ void nsd_uarte_deinit(nsd_uarte_drv_t *p_uarte_drv)
 
 void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *p_txbuf)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_txbuf != NULL);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_txbuf != NULL, "Buffer pointer is NULL!");
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_UARTE_DRV_STATE_UNINIT,
+                  "Driver is not initialized!");
 
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
@@ -138,8 +143,9 @@ void nsd_uarte_send_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, const void *
 
 void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_uarte_drv->uarte_tx_state != NSD_UARTE_DRV_STATE_UNINIT,
+                  "Driver is not initialized!");
 
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
@@ -151,14 +157,14 @@ void nsd_uarte_send_stop(nsd_uarte_drv_t *p_uarte_drv)
 
 uint32_t nsd_uarte_send_busy_check(nsd_uarte_drv_t *p_uarte_drv)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
     return p_uarte_drv->uarte_tx_state == NSD_UARTE_DRV_STATE_BUSY ? 1 : 0;
 }
 
 void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_rxbuf)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
-    NSD_DRV_CHECK(p_rxbuf != NULL);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_rxbuf != NULL, "Buffer pointer is NULL!");
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     p_reg->RXD.PTR    = (uint32_t)p_rxbuf;
@@ -171,7 +177,7 @@ void nsd_uarte_receive_start(nsd_uarte_drv_t *p_uarte_drv, uint32_t n, void *p_r
 
 void nsd_uarte_receive_stop(nsd_uarte_drv_t *p_uarte_drv)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
 
     p_reg->INTENCLR = UARTE_INTENCLR_ENDTX_Msk |
@@ -182,13 +188,13 @@ void nsd_uarte_receive_stop(nsd_uarte_drv_t *p_uarte_drv)
 
 uint32_t nsd_uarte_receive_busy_check(nsd_uarte_drv_t *p_uarte_drv)
 {
-    NSD_DRV_CHECK(p_uarte_drv != NULL);
+    NSD_DRV_CHECK(p_uarte_drv != NULL, "Driver pointer is NULL!");
     return p_uarte_drv->uarte_rx_state == NSD_UARTE_DRV_STATE_BUSY ? 1 : 0;
 }
 
 void nsd_uarte_irq_routine(void *p_ctx)
 {
-    NSD_DRV_CHECK(p_ctx != NULL);
+    NSD_DRV_CHECK(p_ctx != NULL, "Context is NULL!");
     nsd_uarte_drv_t *p_uarte_drv = (nsd_uarte_drv_t *) p_ctx;
     NRF_UARTE_Type * p_reg = p_uarte_drv->p_uarte_reg;
     if (p_reg->EVENTS_ENDTX == 1)

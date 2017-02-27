@@ -94,10 +94,11 @@ void nsd_spim_prepare(void)
 
 void nsd_spim_init(nsd_spim_drv_t *p_spim_drv)
 {
-    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_UNINIT,
+                  "Driver already initialized!");
 
-    NSD_DRV_CHECK(p_spim_drv != NULL);
-    NSD_DRV_CHECK(p_spim_drv->spim_state != NSD_SPIM_DRV_STATE_UNINIT);
+    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
 
     /* Set pins. */
     p_reg->PSEL.SCK  = nsd_gpio_translate_periph(&p_spim_drv->config->sck_pin),
@@ -129,9 +130,11 @@ void nsd_spim_init(nsd_spim_drv_t *p_spim_drv)
 
 void nsd_spim_deinit(nsd_spim_drv_t *p_spim_drv)
 {
-    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg
-    NSD_DRV_CHECK(p_spim_drv != NULL);
-    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY);
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY,
+                  "Driver is not initialized!");
+
+    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
 
     /* Disable peripheral irq in NVIC. */
     nsd_common_irq_disable(p_spim_drv->irq);
@@ -145,15 +148,18 @@ void nsd_spim_deinit(nsd_spim_drv_t *p_spim_drv)
 
 inline void nsd_spim_select(nsd_spim_drv_t *p_spim_drv)
 {
-    NSD_DRV_CHECK(p_spim_drv != NULL);
-    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY);
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY,
+                  "Driver is not initialized!");
     nsd_gpio_clr(p_spim_drv->config->cs_pin.p_port, p_spim_drv->config->cs_pin.pin);
 }
 
 inline void nsd_spim_unselect(nsd_spim_drv_t *p_spim_drv)
 {
-    NSD_DRV_CHECK(p_spim_drv != NULL);
-    NSD_DRV_CHECK(p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_ENDTRX);
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(((p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_FINISH) ||
+                   (p_spim_drv->spim_state == NSD_SPIM_DRV_STATE_READY)),
+                    "Driver is in bad state!");
     nsd_gpio_set(p_spim_drv->config->cs_pin.p_port, p_spim_drv->config->cs_pin.pin);
 }
 
@@ -163,7 +169,10 @@ void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
                        uint32_t n_rx,
                        void *p_rxbuf)
 {
-    NSD_DRV_CHECK(p_spim_drv != NULL);
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(n_tx <= 255, "TX length is too long!");
+    NSD_DRV_CHECK(n_rx <= 255, "RX length is too long!");
+
     NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
     p_reg->TXD.PTR    = (uint32_t)p_txbuf;
     p_reg->TXD.MAXCNT = n_tx;
@@ -176,7 +185,8 @@ void nsd_spim_exchange(nsd_spim_drv_t *p_spim_drv,
 
 void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, uint32_t n, const void *p_txbuf)
 {
-    NSD_DRV_CHECK(p_spim_drv != NULL);
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+
     NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
     p_reg->TXD.PTR    = (uint32_t)p_txbuf;
     p_reg->TXD.MAXCNT = n;
@@ -188,7 +198,8 @@ void nsd_spim_send(nsd_spim_drv_t *p_spim_drv, uint32_t n, const void *p_txbuf)
 
 void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, uint32_t n, void *p_rxbuf)
 {
-    NSD_DRV_CHECK(p_spim_drv != NULL);
+    NSD_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+
     NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
     p_reg->RXD.PTR    = (uint32_t)p_rxbuf;
     p_reg->RXD.MAXCNT = n;
@@ -200,7 +211,8 @@ void nsd_spim_receive(nsd_spim_drv_t *p_spim_drv, uint32_t n, void *p_rxbuf)
 
 void nsd_spim_irq_routine(void *p_ctx)
 {
-    NSD_DRV_CHECK(p_ctx != NULL);
+    NSD_DRV_CHECK(p_ctx != NULL, "Context is NULL!");
+
     nsd_spim_drv_t *p_spim_drv = (nsd_spim_drv_t *)p_ctx;
     NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
 

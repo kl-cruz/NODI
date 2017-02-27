@@ -79,12 +79,18 @@ void nsd_rtc_prepare(void)
 
 void nsd_rtc_init(nsd_rtc_drv_t *p_rtc_drv)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
-    NSD_DRV_CHECK(p_rtc_drv->config != NULL);
-    NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_UNINIT);
-    NSD_DRV_CHECK(p_rtc_drv->config->prescaler & RTC_PRESCALER_PRESCALER_Msk == 0);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_rtc_drv->config != NULL, "Driver's config pointer is NULL!");
+    NSD_DRV_CHECK(p_rtc_drv->state == NSD_RTC_DRV_STATE_UNINIT,
+                  "Driver already initialized!");
+    NSD_DRV_CHECK(p_rtc_drv->config->prescaler & RTC_PRESCALER_PRESCALER_Msk == 0,
+                  "RTC prescaler out of band!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
+
+    /* NRF52840 ERRATA 20 */
+    p_reg->TASKS_STOP = 0;
+    /* NRF52840 ERRATA 20 */
 
     /* Set up prescaler. */
     p_reg->PRESCALER = p_rtc_drv->config->prescaler;
@@ -106,11 +112,11 @@ void nsd_rtc_init(nsd_rtc_drv_t *p_rtc_drv)
 
 void nsd_rtc_evt_enable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     uint32_t evts_reg = 0;
-    switch( evt)
+    switch (evt)
     {
     case NSD_RTC_DRV_CB_EVT_TICK:
         p_reg->EVENTS_TICK = 0;
@@ -137,6 +143,7 @@ void nsd_rtc_evt_enable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
         evts_reg = RTC_INTENSET_COMPARE3_Set << RTC_INTENSET_COMPARE3_Pos;
         break;
     default:
+        NSD_DRV_CHECK(false, "Unhandled event!");
         break;
     }
 
@@ -146,7 +153,7 @@ void nsd_rtc_evt_enable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
 
 void nsd_rtc_evt_disable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     uint32_t evts_reg = 0;
@@ -171,6 +178,7 @@ void nsd_rtc_evt_disable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
         evts_reg = RTC_INTENCLR_COMPARE3_Clear << RTC_INTENCLR_COMPARE3_Pos;
         break;
     default:
+        NSD_DRV_CHECK(false, "Unhandled event!");
         break;
     }
 
@@ -180,8 +188,9 @@ void nsd_rtc_evt_disable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt)
 
 void nsd_rtc_start(nsd_rtc_drv_t *p_rtc_drv)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
-    NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_STARTED);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_rtc_drv->state == NSD_RTC_DRV_STATE_STOPPED,
+                  "Driver is already started!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     p_reg->TASKS_START = 1;
@@ -190,8 +199,9 @@ void nsd_rtc_start(nsd_rtc_drv_t *p_rtc_drv)
 
 void nsd_rtc_stop(nsd_rtc_drv_t *p_rtc_drv)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
-    NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_STOPPED);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
+    NSD_DRV_CHECK(p_rtc_drv->state != NSD_RTC_DRV_STATE_STOPPED,
+                  "Driver is already stopped!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     p_reg->TASKS_STOP = 1;
@@ -200,7 +210,7 @@ void nsd_rtc_stop(nsd_rtc_drv_t *p_rtc_drv)
 
 inline void nsd_rtc_clear(nsd_rtc_drv_t *p_rtc_drv)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     p_reg->TASKS_CLEAR = 1;
@@ -208,7 +218,7 @@ inline void nsd_rtc_clear(nsd_rtc_drv_t *p_rtc_drv)
 
 inline void nsd_rtc_overflow_trigger(nsd_rtc_drv_t *p_rtc_drv)
 {
-    NSD_DRV_CHECK(p_rtc_drv != NULL);
+    NSD_DRV_CHECK(p_rtc_drv != NULL, "Driver pointer is NULL!");
 
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;
     p_reg->TASKS_TRIGOVRFLW = 1;
@@ -216,7 +226,7 @@ inline void nsd_rtc_overflow_trigger(nsd_rtc_drv_t *p_rtc_drv)
 
 void nsd_rtc_irq_routine(void *p_ctx)
 {
-    NSD_DRV_CHECK(p_ctx != NULL);
+    NSD_DRV_CHECK(p_ctx != NULL, "Context is NULL!");
 
     nsd_rtc_drv_t *p_rtc_drv = (nsd_rtc_drv_t *) p_ctx;
     NRF_RTC_Type * p_reg = p_rtc_drv->p_rtc_reg;

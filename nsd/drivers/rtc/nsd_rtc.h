@@ -45,12 +45,12 @@
  * @brief   RTC callback events.
  */
 typedef enum {
-    NSD_RTC_DRV_CB_EVT_TICK,     ///< Driver is uninitialized.
-    NSD_RTC_DRV_CB_EVT_OVERFLOW, ///< Driver is ready to start an operation.
-    NSD_RTC_DRV_CB_EVT_COMP0,    ///< Driver is busy, executing operation.
-    NSD_RTC_DRV_CB_EVT_COMP1,    ///< Driver finished operation.
-    NSD_RTC_DRV_CB_EVT_COMP2,    ///< Driver finished operation.
-    NSD_RTC_DRV_CB_EVT_COMP3,    ///< Driver finished operation.
+    NSD_RTC_DRV_CB_EVT_TICK,     ///< Event generated after TICK event.
+    NSD_RTC_DRV_CB_EVT_OVERFLOW, ///< Event generated after OVRFLW event.
+    NSD_RTC_DRV_CB_EVT_COMP0,    ///< Event generated after COMPARE0 event.
+    NSD_RTC_DRV_CB_EVT_COMP1,    ///< Event generated after COMPARE1 event.
+    NSD_RTC_DRV_CB_EVT_COMP2,    ///< Event generated after COMPARE2 event.
+    NSD_RTC_DRV_CB_EVT_COMP3,    ///< Event generated after COMPARE3 event.
 } nsd_rtc_cb_evt_t;
 
 typedef struct nsd_rtc_drv nsd_rtc_drv_t;
@@ -58,13 +58,13 @@ typedef struct nsd_rtc_drv nsd_rtc_drv_t;
 /**
  * @brief   RTC notification callback type.
  *
- * @param[in] p_rtc_drv      pointer to the nsd_rtc_drv_t object triggering the callback
+ * @param[in] p_rtc_drv         Pointer to the nsd_rtc_drv_t object triggering the callback.
  */
 typedef void (*nsd_rtc_irq_callback_t)(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt);
 
 
 typedef struct {
-    nsd_rtc_irq_callback_t evt_cb;    ///< Transmit operation complete callback or NULL.
+    nsd_rtc_irq_callback_t evt_cb;    ///< Event callback or NULL.
     uint32_t               prescaler; ///< RTC prescaler to gain period 32768/(PRESCALER+1).
 } nsd_rtc_config_s;
 
@@ -108,51 +108,66 @@ extern nsd_rtc_drv_t NSD_RTC2;
 extern "C" {
 #endif
 /**
- * @brief Initializes structures of active drivers
+ * @brief Initializes structures of active drivers.
  */
 void nsd_rtc_prepare();
 
 /**
  * @brief Initializes selected peripheral.
  *
- * @param[in] p_rtc_drv       Pointer to structure representing RTC driver.
+ * Remember to start LFCLK before using RTC peripheral.
+ *
+ * @param[in] p_rtc_drv         Pointer to structure representing RTC driver.
  */
 void nsd_rtc_init(nsd_rtc_drv_t *p_rtc_drv);
 
 /**
- * @brief nsd_rtc_send_stop
- * @param p_rtc_drv
+ * @brief Enables choosen event to generate interrupt.
+ *
+ * @param[in] p_rtc_drv         Pointer to structure representing RTC driver.
+ * @param[in] p_evt             Event to enable in interrupt and event systems in RTC peripheral.
+ *
  */
 void nsd_rtc_evt_enable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt);
 
 /**
- * @brief nsd_rtc_send_stop
- * @param p_rtc_drv
+ * @brief Disables choosen event.
+ *
+ * @param[in] p_rtc_drv         Pointer to structure representing RTC driver.
+ * @param[in] p_evt             Event to disable in interrupt and event systems in RTC peripheral.
+ *
  */
 void nsd_rtc_evt_disable(nsd_rtc_drv_t *p_rtc_drv, nsd_rtc_cb_evt_t evt);
 
 /**
- * @brief Sends data using RTC peripheral.
+ * @brief Starts RTC peripheral.
  *
- * @param[in]  p_rtc_drv      Pointer to structure representing RTC driver.
+ * @param[in]  p_rtc_drv        Pointer to structure representing RTC driver.
+ *
  */
 void nsd_rtc_start(nsd_rtc_drv_t *p_rtc_drv);
 
 /**
- * @brief nsd_rtc_send_stop
- * @param p_rtc_drv
+ * @brief Stops RTC peripheral.
+ *
+ * @param[in] p_rtc_drv         Pointer to structure representing RTC driver.
+ *
  */
 void nsd_rtc_stop(nsd_rtc_drv_t *p_rtc_drv);
 
 /**
- * @brief nsd_rtc_clear
- * @param p_rtc_drv
+ * @brief Clears RTC counter.
+ *
+ * @param[in] p_rtc_drv         Pointer to structure representing RTC driver.
+ *
  */
 void nsd_rtc_clear(nsd_rtc_drv_t *p_rtc_drv);
 
 /**
- * @brief nsd_rtc_overflow_trigger
- * @param p_rtc_drv
+ * @brief Triggers overflow task to generate overflow event by the software.
+ *
+ * @param[in] p_rtc_drv         Pointer to structure representing RTC driver.
+ *
  */
 void nsd_rtc_overflow_trigger(nsd_rtc_drv_t *p_rtc_drv);
 

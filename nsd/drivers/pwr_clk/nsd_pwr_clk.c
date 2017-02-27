@@ -126,9 +126,15 @@ bool nsd_clk_lfclk_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
             (NRF_CLOCK->LFCLKSTAT == (CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos));
 }
 
+bool nsd_clk_hfclk_running(nsd_pwr_clk_drv_t * p_pwr_clk_drv)
+{
+    return (NRF_CLOCK->HFCLKRUN == (CLOCK_HFCLKRUN_STATUS_Triggered << CLOCK_HFCLKRUN_STATUS_Pos)) &&
+            (NRF_CLOCK->HFCLKSTAT == (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos));
+}
+
 void nsd_pwr_clk_irq_routine(void *p_ctx)
 {
-    NSD_DRV_CHECK(p_ctx != NULL);
+    NSD_DRV_CHECK(p_ctx != NULL, "Context is NULL!");
     nsd_pwr_clk_drv_t * p_pwr_clk_drv = (nsd_pwr_clk_drv_t *) p_ctx;
 
     /* Call callback if not null. */

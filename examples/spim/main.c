@@ -86,7 +86,7 @@ int main(void)
     while (!data_sent);
     nsd_spim_deinit(&NSD_SPIM0);
 
-    while (true)
+    while (1)
     {
     }
 }
