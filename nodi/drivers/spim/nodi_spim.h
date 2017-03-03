@@ -141,7 +141,7 @@ void nodi_spim_unselect(nodi_spim_drv_t *p_spim_drv);
  * @brief   Exchanges data using SPIM peripheral.
  *
  * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
- * @param[out] n_tx             Output data length.
+ * @param[in]  n_tx             Output data length.
  * @param[out] p_txbuf          Output data buffer.
  * @param[in]  n_rx             Input data length.
  * @param[in]  p_rxbuf          Input data buffer.
@@ -156,7 +156,7 @@ void nodi_spim_exchange(nodi_spim_drv_t *p_spim_drv,
  * @brief Sends data using SPIM peripheral.
  *
  * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
- * @param[out] n                Output data length.
+ * @param[in]  n                Output data length.
  * @param[out] p_txbuf          Output data buffer.
  */
 void nodi_spim_send(nodi_spim_drv_t *p_spim_drv, uint32_t n, const void *p_txbuf);
@@ -176,6 +176,48 @@ void nodi_spim_receive(nodi_spim_drv_t *p_spim_drv, uint32_t n, void *p_rxbuf);
  * @param[in] p_spim_drv        Pointer to structure representing SPIM driver.
  */
 void nodi_spim_deinit(nodi_spim_drv_t *p_spim_drv);
+
+/*===========================================================================*/
+/* PPI related functions.                                                    */
+/*===========================================================================*/
+
+/**
+ * @brief Configures registers in SPIM peripheral.
+ *
+ * Function for configuring buffer registers in SPIM peripheral. This function disables interrupts
+ * because assumes that developer will use it with PPI without interrupts. For mixing interrupts
+ * and events please read Nordic's IC product specification.
+ *
+ * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
+ * @param[in]  n_tx             Output data length.
+ * @param[out] p_txbuf          Output data buffer.
+ * @param[in]  n_rx             Input data length.
+ * @param[in]  p_rxbuf          Input data buffer.
+ */
+void nodi_spim_xfer_configure(nodi_spim_drv_t *p_spim_drv,
+                              uint32_t n_tx,
+                              const void *p_txbuf,
+                              uint32_t n_rx,
+                              void *p_rxbuf);
+
+/**
+ * @brief Returns start task address to connect some events with this task using PPI.
+ *
+ * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
+ *
+ * @return Address to start task of the SPIM peripheral.
+ */
+uint32_t nodi_spim_task_addr_get(nodi_spim_drv_t *p_spim_drv);
+
+/**
+ * @brief Returns end event address to connect some tasks with this event using PPI.
+ *
+ * @param[in]  p_spim_drv       Pointer to structure representing SPIM driver.
+ *
+ * @return Address to end event of the SPIM peripheral.
+ */
+uint32_t nodi_spim_evt_addr_get(nodi_spim_drv_t *p_spim_drv);
+
 
 #ifdef NODI_SPIM_DISABLE_IRQ_CONNECT
 

@@ -116,8 +116,8 @@ void nodi_spim_init(nodi_spim_drv_t *p_spim_drv)
 
     /* Set interrupt, because driver is based on interrupts. */
     p_reg->INTENCLR = 0xFFFFFFFF;
-    p_reg->EVENTS_END = 0;
-    p_reg->INTENSET = SPIM_INTENSET_END_Msk;
+//    p_reg->EVENTS_END = 0;
+//    p_reg->INTENSET = SPIM_INTENSET_END_Msk;
 
     /* Enable peripheral. */
     p_reg->ENABLE = SPIM_ENABLE_ENABLE_Enabled;
@@ -180,6 +180,8 @@ void nodi_spim_exchange(nodi_spim_drv_t *p_spim_drv,
     p_reg->RXD.MAXCNT = n_rx;
 
     p_spim_drv->spim_state = NODI_SPIM_DRV_STATE_BUSY;
+    p_reg->EVENTS_END = 0;
+    p_reg->INTENSET = SPIM_INTENSET_END_Msk;
     p_reg->TASKS_START = 1;
 }
 
@@ -193,6 +195,8 @@ void nodi_spim_send(nodi_spim_drv_t *p_spim_drv, uint32_t n, const void *p_txbuf
     p_reg->RXD.MAXCNT = 0;
 
     p_spim_drv->spim_state = NODI_SPIM_DRV_STATE_BUSY;
+    p_reg->EVENTS_END = 0;
+    p_reg->INTENSET = SPIM_INTENSET_END_Msk;
     p_reg->TASKS_START = 1;
 }
 
@@ -206,7 +210,42 @@ void nodi_spim_receive(nodi_spim_drv_t *p_spim_drv, uint32_t n, void *p_rxbuf)
     p_reg->TXD.MAXCNT = 0;
 
     p_spim_drv->spim_state = NODI_SPIM_DRV_STATE_BUSY;
+    p_reg->EVENTS_END = 0;
+    p_reg->INTENSET = SPIM_INTENSET_END_Msk;
     p_reg->TASKS_START = 1;
+}
+
+void nodi_spim_xfer_configure(nodi_spim_drv_t *p_spim_drv,
+                              uint32_t n_tx,
+                              const void *p_txbuf,
+                              uint32_t n_rx,
+                              void *p_rxbuf)
+{
+    NODI_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
+    p_reg->RXD.PTR    = (uint32_t)p_rxbuf;
+    p_reg->TXD.PTR    = (uint32_t)p_txbuf;
+
+    p_reg->RXD.MAXCNT = n_rx;
+    p_reg->TXD.MAXCNT = n_tx;
+
+    /* Disable interrupts. PPI functions works with events.*/
+    p_reg->INTENCLR = 0xFFFFFFFF;
+
+}
+
+uint32_t nodi_spim_start_task_addr_get(nodi_spim_drv_t *p_spim_drv)
+{
+    NODI_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
+    return p_reg->TASKS_START;
+}
+
+uint32_t nodi_spim_end_evt_addr_get(nodi_spim_drv_t *p_spim_drv)
+{
+    NODI_DRV_CHECK(p_spim_drv != NULL, "Driver pointer is NULL!");
+    NRF_SPIM_Type * p_reg = p_spim_drv->p_spim_reg;
+    return p_reg->EVENTS_END;
 }
 
 void nodi_spim_irq_routine(void *p_ctx)
@@ -232,6 +271,7 @@ void nodi_spim_irq_routine(void *p_ctx)
         if (p_spim_drv->spim_state == NODI_SPIM_DRV_STATE_FINISH)
         {
             p_spim_drv->spim_state = NODI_SPIM_DRV_STATE_READY;
+            p_reg->INTENCLR = SPIM_INTENCLR_END_Msk;
         }
     }
 }
